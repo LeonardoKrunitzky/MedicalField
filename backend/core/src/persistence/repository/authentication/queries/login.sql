@@ -1,0 +1,1 @@
+SELECT * FROM professionals WHERE professional_registration = $1 AND password = $2;
