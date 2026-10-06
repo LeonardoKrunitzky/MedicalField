@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 import os
 from typing import Optional, AsyncGenerator
 
-from backend.core.src.connections.base import BaseClient
+from src.connections.base import BaseClient
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import text

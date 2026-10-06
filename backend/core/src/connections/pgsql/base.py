@@ -2,9 +2,9 @@ from typing import List, Any, Mapping
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from backend.core.src.connections.pgsql.connection import PostgreSQLClient
+from src.connections.pgsql.connection import PostgreSQLClient
 
-class PostgresqlBasePort:
+class PostgresqlBase:
     """
     Base for repositories using raw SQL in an async context.
     """
