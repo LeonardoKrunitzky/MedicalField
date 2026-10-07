@@ -12,7 +12,7 @@ class TracingMiddleware(BaseHTTPMiddleware):
         self.tracing_url = os.getenv("TRACING_URL")
 
     async def dispatch(self, request: Request, call_next):
-        if request.url.path.startswith("/core/usecases/professional/login"):
+        if request.url.path.startswith("/core/usecases/professional/"):
             return await call_next(request)
 
         start_time = time.time()
