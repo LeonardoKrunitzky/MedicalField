@@ -1,0 +1,2 @@
+class MedicationRepositoryPostgreSQL:
+    pass
