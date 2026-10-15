@@ -14,10 +14,9 @@ class ProfessionalController:
         self.login_use_case = login_use_case
 
     async def login(self, payload: LoginRequestDTO) -> LoginResponseDTO:
-        access_token = await self.login_use_case.execute(
+        return await self.login_use_case.execute(
             payload=LoginRequestDTO(
                 professional_registration=payload.professional_registration,
                 password=payload.password,
             )
         )
-        return LoginResponseDTO(access_token=access_token)

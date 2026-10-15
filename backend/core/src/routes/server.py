@@ -26,8 +26,8 @@ app = FastAPI(
     openapi_url="/openapi.json",
     openapi_tags=[
         {
-            "name": "Authentication",
-            "description": "Operations related to user authentication and authorization",
+            "name": "Professional",
+            "description": "Operations related to the professional",
         },
         {
             "name": "Attendance",

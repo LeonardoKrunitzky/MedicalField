@@ -18,7 +18,7 @@ class ProfessionalRepositoryPostgreSQL(PostgresqlBase, ProfessionalRepository):
     def __init__(self, db: PostgreSQLClient) -> None:
         super().__init__(db)
 
-    async def read_by_professional_registration(
+    async def fetch_by_professional_registration(
         self, professional_registration: str
     ) -> Professional:
         rows = await self._execute_query(

@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-class MedicalRecords(BaseModel):
+class MedicalRecord(BaseModel):
     id: UUID = Field(description="The unique identifier of the medical record")
     patient_id: UUID = Field(description="The unique identifier of the patient")
     blood_type: str = Field(description="The blood type of the patient")

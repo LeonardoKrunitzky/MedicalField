@@ -1,0 +1,1 @@
+SELECT * FROM patients WHERE id = :patient_id;

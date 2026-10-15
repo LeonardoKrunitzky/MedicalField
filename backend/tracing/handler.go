@@ -1,44 +1,46 @@
 package main
 
 import (
+	"context"
 	"database/sql"
-	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
 )
 
 type LogPayload struct {
-	ClientIP         string `json:"client_ip"`
-	ProfessionalID   uuid.UUID    `json:"professional_id"`
-	HTTPMethod       string `json:"http_method"`
-	Route            string `json:"route"`
-	StatusCode       int    `json:"status_code"`
-	ProcessingTimeMS int    `json:"processing_time_ms"`
+	ClientIP         string    `json:"client_ip" example:"127.0.0.1" doc:"Client IP address"`
+	ProfessionalID   uuid.UUID `json:"professional_id" example:"550e8400-e29b-41d4-a716-446655440000" doc:"Professional UUID"`
+	HTTPMethod       string    `json:"http_method" example:"POST" doc:"HTTP Method"`
+	Route            string    `json:"route" example:"/appointments" doc:"Request route"`
+	StatusCode       int       `json:"status_code" example:"201" doc:"HTTP Status Code"`
+	ProcessingTimeMS int       `json:"processing_time_ms" example:"45" doc:"Processing time in milliseconds"`
 }
 
-func LogHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
+type LogInput struct {
+	Body LogPayload
+}
 
-		var payload LogPayload
-		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-			log.Printf("Payload Decode Error: %v", err)
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
-			return
-		}
+type LogOutput struct {
+	Status int
+	Body   struct {
+		Message string `json:"message" example:"Created"`
+	}
+}
 
-		if err := SaveLog(db, payload); err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+func LogHandler(db *sql.DB) func(ctx context.Context, input *LogInput) (*LogOutput, error) {
+	return func(ctx context.Context, input *LogInput) (*LogOutput, error) {
+		if err := SaveLog(db, input.Body); err != nil {
+			log.Printf("Database Error: %v", err)
+			return nil, huma.Error500InternalServerError("Internal Server Error", err)
 		}
 
 		log.Println("Log saved successfully")
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(`{"message": "Created"}`))
+		resp := &LogOutput{}
+		resp.Status = http.StatusCreated
+		resp.Body.Message = "Created"
+		return resp, nil
 	}
 }

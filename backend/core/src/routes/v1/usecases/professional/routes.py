@@ -6,7 +6,7 @@ from fastapi_injector import Injected
 
 router = APIRouter(
     prefix="/professional",
-    tags=["professional"],
+    tags=["Professional"],
 )
 
 

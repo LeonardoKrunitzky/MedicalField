@@ -1,21 +1,35 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends
 from fastapi_injector import Injected
 
 from src.controller.medication.controller import MedicationController
-from src.dtos.medication.read import ReadMedicationResponseDTO
+from src.dtos.medication.read import ReadMedicationByAttendanceResponceDTO, ReadMedicationResponseDTO
 from src.config.security.security import verify_token
 
 router = APIRouter(
-    prefix="/medication", tags=["medication"], dependencies=[Depends(verify_token)]
+    prefix="/medication", tags=["Medication"], dependencies=[Depends(verify_token)]
 )
 
 @router.get(
-    "/fetch_medications",
+    "/",
     summary="Fetch medications",
     status_code=200,
     response_model=ReadMedicationResponseDTO,
 )
-async def fetch_medications(
+async def fetch(
     controller: MedicationController = Injected(MedicationController),
 ):
-    return await controller.fetch_medications()
+    return await controller.fetch()
+
+@router.get(
+    "/{atttendence_id}",
+    summary="Fetch medication by id",
+    status_code=200,
+    response_model=ReadMedicationByAttendanceResponceDTO,
+)
+async def fetch_by_attendance(
+    attendance_id: UUID,
+    controller: MedicationController = Injected(MedicationController),
+):
+    return await controller.fetch_by_attendance(attendance_id)

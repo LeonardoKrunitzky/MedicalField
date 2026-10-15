@@ -4,9 +4,9 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 
-class ReadMedicalRecordDTO(BaseModel):
+class MedicalRecord(BaseModel):
     id: UUID = Field(description="The unique identifier of the medical record")
-    patient_id: UUID = Field(
+    patient_name: str = Field(
         description="The unique identifier of the patient associated with the medical record"
     )
     blood_type: str = Field(description="The blood type of the patient")
@@ -19,5 +19,9 @@ class ReadMedicalRecordDTO(BaseModel):
         description="The date and time when the medical record was created"
     )
 
-    class Config:
-        from_attributes = True
+
+class ReadMedicalRecordsResponseDTO(BaseModel):
+    items: list[MedicalRecord] = Field(description="A list of medication objects")
+
+class ReadMedicalRecordByIdDTO(BaseModel):
+    id: UUID = Field(description="The unique identifier of the patient")

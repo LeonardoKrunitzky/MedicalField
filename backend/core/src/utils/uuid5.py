@@ -4,7 +4,7 @@ import uuid
 from pydantic import BaseModel
 
 
-def generate_uuid5_from_payload(payload: BaseModel) -> uuid.UUID:
+def generate_uuid5(payload: BaseModel) -> uuid.UUID:
     """
     Generate a deterministic UUIDv5 from a Pydantic model payload.
 

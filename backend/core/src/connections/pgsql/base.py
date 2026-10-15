@@ -4,17 +4,21 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from src.connections.pgsql.connection import PostgreSQLClient
 
+
 class PostgresqlBase:
     """
     Base for repositories using raw SQL in an async context.
     """
+
     def __init__(self, client: PostgreSQLClient):
         """
         Initialize with the async postgres client.
         """
         self.client = client
 
-    async def _execute_query(self, query: str, params: dict = None) -> List[Mapping[str, Any]]:
+    async def _execute_query(
+        self, query: str, params: dict = None
+    ) -> List[Mapping[str, Any]]:
         """
         Executes SELECT queries and returns result mappings asynchronously.
         """
@@ -25,13 +29,28 @@ class PostgresqlBase:
         except SQLAlchemyError as exc:
             raise RuntimeError(f"Database query failed: {str(exc)}") from exc
 
-    async def _execute_command(self, query: str, params: dict = None) -> int:
-        """
-        Executes UPDATE, INSERT, DELETE and returns rowcount asynchronously.
+    async def _execute_command(self, query: str, params: dict = None) -> dict | int:
+        """Execute a write SQL query and return the mapped row or affected row count.
+
+        Args:
+            query (str): The SQL statement to execute.
+            params (dict, optional): Parameters to bind to the query. Defaults to None.
+
+        Returns:
+            dict | int: A dictionary of the returned row if RETURNING is used, otherwise rowcount.
+
+        Raises:
+            RuntimeError: If the database operation fails.
         """
         try:
             async with self.client.session() as session:
                 result = await session.execute(text(query), params or {})
+                if result.returns_rows:
+                    row = result.mappings().one()
+                    await session.commit()
+                    return dict(row)
+
+                await session.commit()
                 return result.rowcount
         except SQLAlchemyError as exc:
             raise RuntimeError(f"Database command failed: {str(exc)}") from exc
