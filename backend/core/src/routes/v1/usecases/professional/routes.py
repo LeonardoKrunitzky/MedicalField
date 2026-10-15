@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from src.dtos.professional.create import CreateProfessionalDTO
-from src.controller.professional.professional import ProfessionalController
+from backend.core.src.controller.professional.controller import ProfessionalController
 from src.dtos.professional.login import LoginRequestDTO, LoginResponseDTO
 from fastapi_injector import Injected
 

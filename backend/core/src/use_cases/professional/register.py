@@ -13,9 +13,8 @@ class RegisterUseCase:
 
     async def execute(self, payload: LoginRequestDTO) -> LoginResponseDTO:
         try:
-            id = generate_uuid5_from_payload(payload=payload)
             await self.professional_service.register(
-                id=id,
+                id=generate_uuid5_from_payload(payload=payload),
                 name=payload.name,
                 professional_registration=payload.professional_registration,
                 password=hash_password(payload.password),
