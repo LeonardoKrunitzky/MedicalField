@@ -17,7 +17,7 @@ project-down:
 # ==========================================
 # BACKEND CORE (PYTHON / UVICORN)
 # ==========================================
-core-install:
+install-core:
 	cd $(CORE_DIR) && uv sync
 
 run-core:
@@ -35,10 +35,10 @@ run-tracing:
 # ==========================================
 # COMMUNICATION (TS / NODE)
 # ==========================================
-communication-install:
+install-communication:
 	cd $(COMMUNICATION_DIR) && npm install
 
-communication:
+run-communication:
 	cd $(COMMUNICATION_DIR) && npm run dev
 
 # ==========================================
