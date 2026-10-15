@@ -1,9 +1,9 @@
-.PHONY: db-up db-down core-install core login logs-install logs up down
+.PHONY: project-up project-down core-install core tracing communication-install communication up
 
 # Variáveis de diretório
 CORE_DIR = backend/core
-LOGIN_DIR = backend/login
-LOGS_DIR = backend/logs
+COMMUNICATION_DIR = backend/communication
+TRACING_DIR = backend/tracing
 
 # ==========================================
 # DOCKER & DATABASES (Postgres e SQLite via compose)
@@ -18,28 +18,28 @@ project-down:
 # BACKEND CORE (PYTHON / UVICORN)
 # ==========================================
 core-install:
-	cd $(CORE_DIR) && python -m venv .venv
-	cd $(CORE_DIR) && .venv/bin/pip install -r requirements.txt
+	cd $(CORE_DIR) && uv sync
 
 core:
-	cd $(CORE_DIR) && .venv/bin/uvicorn main:app --reload --port 8000
+	cd $(CORE_DIR) && uv run uvicorn main:app --reload --port 8000
 
 # ==========================================
-# LOGIN (GO)
+# TRACING (GO)
 # ==========================================
-login:
-	cd $(LOGIN_DIR) && go run main.go
+tracing:
+	cd $(TRACING_DIR) && go run main.go
 
 # ==========================================
-# LOGS (TYPESCRIPT)
+# COMMUNICATION (TS / NODE)
 # ==========================================
-logs-install:
-	cd $(LOGS_DIR) && npm install
+communication-install:
+	cd $(COMMUNICATION_DIR) && npm install
 
-logs:
-	cd $(LOGS_DIR) && npm run dev
+communication:
+	cd $(COMMUNICATION_DIR) && npm run dev
 
 # ==========================================
 # COMANDOS GLOBAIS
 # ==========================================
-up: db-up core login logs
+# Para rodar isso, use: make -j 4 up
+up: project-up core tracing communication
