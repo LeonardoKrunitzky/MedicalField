@@ -14,8 +14,8 @@ class PatientService:
     async def create(self, id: UUID, name: str, document: str) -> Patient:
         return await self._repository.create(id=id, name=name, document=document)
 
-    async def fetch(self) -> list[Patient]:
-        return await self._repository.fetch()
+    async def fetch_all(self) -> list[Patient]:
+        return await self._repository.fetch_all()
 
     async def fetch_by_id(self, patient_id: UUID) -> Patient:
         return await self._repository.fetch_by_id(patient_id=patient_id)

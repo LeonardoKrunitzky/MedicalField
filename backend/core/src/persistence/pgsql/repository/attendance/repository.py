@@ -11,7 +11,6 @@ from src.dtos.attendance.read import Attendance
 QUERYS_DIR = Path(__file__).resolve().parent / "queries"
 CREATE_QUERY = (QUERYS_DIR / "create.sql").read_text(encoding="utf-8")
 FETCH_QUERY = (QUERYS_DIR / "fetch.sql").read_text(encoding="utf-8")
-FETCH_BY_ID_QUERY = (QUERYS_DIR / "fetch_by_id.sql").read_text(encoding="utf-8")
 FETCH_BY_PATIENT_QUERY = (QUERYS_DIR / "fetch_by_patient.sql").read_text(
     encoding="utf-8"
 )
@@ -35,18 +34,6 @@ class AttendanceRepositoryPostgreSQL(PostgresqlBase, AttendanceRepository):
         notes: Optional[str],
         medications: Optional[List[CreateAttendanceMedicationDTO]],
     ) -> Attendance:
-        print(
-            id,
-            medical_record_id,
-            professional_id,
-            patient_id,
-            pressure,
-            heart_rate,
-            consciousness_level,
-            triage_protocol,
-            notes,  
-            medications
-        )
         rows = await self._execute_query(
             CREATE_QUERY,
             params={
@@ -75,16 +62,6 @@ class AttendanceRepositoryPostgreSQL(PostgresqlBase, AttendanceRepository):
             return []
 
         return rows
-
-    async def fetch_by_id(self, attendance_id: int) -> Attendance:
-        rows = await self._execute_query(
-            query=FETCH_BY_ID_QUERY, params={"attendance_id": attendance_id}
-        )
-
-        if not rows:
-            return None
-
-        return rows[0]
 
     async def fetch_by_patient(self, patient_id: UUID) -> list[Attendance]:
         rows = await self._execute_query(

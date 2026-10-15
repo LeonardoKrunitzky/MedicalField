@@ -1,5 +1,7 @@
+from fastapi import HTTPException, status
 from injector import inject
 
+from src.config.errors.db_exceptions import handle_database_error
 from src.dtos.medical_record.read import MedicalRecord, ReadMedicalRecordByIdDTO
 from src.services.medical_record.service import MedicalRecordService
 
@@ -16,7 +18,10 @@ class FetchMedicalRecordByPatientUseCase:
             )
             
             if not medical_record:
-                return None
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Prontuário não encontrado.",
+                )
 
             return MedicalRecord(
                 id=medical_record.id,
@@ -28,4 +33,4 @@ class FetchMedicalRecordByPatientUseCase:
                 created_at=medical_record.created_at,
             )
         except Exception as e:
-            raise ValueError(f"Fetch medical record by patient failed: {str(e)}")
+            handle_database_error(e)

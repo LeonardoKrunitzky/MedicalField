@@ -16,7 +16,13 @@ router = APIRouter(
     "/",
     summary="Create a new medical record",
     status_code=201,
-    response_model=CreateMedicalRecordResponseDTO
+    response_model=CreateMedicalRecordResponseDTO,
+    responses={
+        404: {"description": "Paciente não encontrado"},
+        409: {"description": "Paciente já possui um prontuário cadastrado"},
+        401: {"description": "Não autorizado"},
+        500: {"description": "Erro interno no servidor"},
+    },
 )
 async def create(
     payload: CreateMedicalRecordDTO,
@@ -29,6 +35,10 @@ async def create(
     summary="Fetch all medical records",
     status_code=200,
     response_model=ReadMedicalRecordsResponseDTO,
+    responses={
+        401: {"description": "Não autorizado"},
+        500: {"description": "Erro interno no servidor"},
+    },
 )
 async def fetch_all(
     controller: MedicalRecordController = Injected(MedicalRecordController),
@@ -40,6 +50,13 @@ async def fetch_all(
     summary="Fetch medical record by patient",
     status_code=200,
     response_model=MedicalRecord,
+    responses={
+        404: {
+            "description": "Prontuário não encontrado para o paciente informado"
+        },
+        401: {"description": "Não autorizado"},
+        500: {"description": "Erro interno no servidor"},
+    },
 )
 async def fetch_by_patient(
     patient_id: UUID,
@@ -52,6 +69,11 @@ async def fetch_by_patient(
     summary="Fetch medical record by id",
     status_code=200,
     response_model=MedicalRecord,
+    responses={
+        404: {"description": "Prontuário médico não encontrado"},
+        401: {"description": "Não autorizado"},
+        500: {"description": "Erro interno no servidor"},
+    },
 )
 async def fetch_by_id(
     id: UUID,

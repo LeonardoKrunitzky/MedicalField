@@ -1,5 +1,7 @@
+from fastapi import HTTPException, status
 from injector import inject
 
+from src.config.errors.db_exceptions import handle_database_error
 from src.dtos.medication.read import (
     ReadMedicationByAttendanceResponceDTO,
     ReadMedicationByIdDTO,
@@ -21,8 +23,11 @@ class FetchMedicationByAttendanceUseCase:
             )
 
             if not medications:
-                return None
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Medicamento não encontrado.",
+                )
 
             return ReadMedicationByAttendanceResponceDTO(items=medications)
         except Exception as e:
-            raise ValueError(f"Fetch medication by attendance failed: {str(e)}")
+            handle_database_error(e)

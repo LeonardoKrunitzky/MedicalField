@@ -15,6 +15,10 @@ router = APIRouter(
     summary="Authenticate a user and return an access token",
     status_code=200,
     response_model=LoginResponseDTO,
+    responses={
+        401: {"description": "Credenciais inválidas (registro ou senha)"},
+        500: {"description": "Erro interno no servidor"},
+    },
 )
 async def login(
     payload: LoginRequestDTO,

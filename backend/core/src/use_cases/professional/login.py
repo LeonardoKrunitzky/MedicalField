@@ -1,5 +1,7 @@
+from fastapi import HTTPException, status
 from injector import inject
 
+from src.config.errors.db_exceptions import handle_database_error
 from src.services.professional.service import ProfessionalServices
 from src.dtos.professional.login import LoginRequestDTO, LoginResponseDTO
 from utils.jwt import create_access_token
@@ -15,7 +17,10 @@ class LoginUseCase:
             user = await self.professional_service.fetch_by_professional_registration(payload.professional_registration)
 
             if not user:
-                raise ValueError("Invalid username or password")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Profissional não encontrado ou senha incorreta.",
+                )
 
             token_payload = {
                 "sub": str(user.id),
@@ -28,4 +33,4 @@ class LoginUseCase:
             return LoginResponseDTO(access_token=access_token)
 
         except Exception as e:
-            raise ValueError(f"Login failed: {str(e)}")
+            handle_database_error(e)

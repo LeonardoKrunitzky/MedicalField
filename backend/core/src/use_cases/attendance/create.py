@@ -2,6 +2,7 @@ import json
 
 from injector import inject
 
+from src.config.errors.db_exceptions import handle_database_error
 from src.utils.uuid5 import generate_uuid5
 from src.dtos.attendance.create import CreateAttendanceDTO, CreateAttendanceMedicationDTO, CreateAttendanceResponseDTO
 from src.services.attendance.service import AttendanceService
@@ -13,12 +14,12 @@ class CreateAttendanceUseCase:
         self.attendance_service = attendance_service
 
     async def execute(
-        self, request: CreateAttendanceDTO
+        self, payload: CreateAttendanceDTO
     ) -> CreateAttendanceResponseDTO:
         try:
             medications_list = []
             
-            for med in request.medications:
+            for med in payload.medications:
                 med_dto = CreateAttendanceMedicationDTO(
                     medication_id=med.medication_id,
                     applied_dose=med.applied_dose,
@@ -34,15 +35,15 @@ class CreateAttendanceUseCase:
                 })
 
             response = await self.attendance_service.create(
-                id=generate_uuid5(request),
-                medical_record_id=request.medical_record_id,
-                professional_id=request.professional_id,
-                patient_id=request.patient_id,
-                pressure=request.pressure,
-                heart_rate=request.heart_rate,
-                consciousness_level=request.consciousness_level,
-                triage_protocol=request.triage_protocol,
-                notes=request.notes,
+                id=generate_uuid5(payload),
+                medical_record_id=payload.medical_record_id,
+                professional_id=payload.professional_id,
+                patient_id=payload.patient_id,
+                pressure=payload.pressure,
+                heart_rate=payload.heart_rate,
+                consciousness_level=payload.consciousness_level,
+                triage_protocol=payload.triage_protocol,
+                notes=payload.notes,
                 medications=json.dumps(medications_list)
             )
 
@@ -60,4 +61,6 @@ class CreateAttendanceUseCase:
                 synchronized_at=response.synchronized_at,
             )
         except Exception as e:
-            raise ValueError(f"Create attendance failed: {str(e)}")
+            handle_database_error(
+                e, custom_conflict_msg="Este atendimento já foi registrado anteriormente."
+            )

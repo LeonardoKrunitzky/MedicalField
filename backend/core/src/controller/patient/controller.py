@@ -2,7 +2,7 @@ from injector import inject
 
 from src.dtos.patient.read import ReadPatientByIdDTO, ReadPatientResponseDTO
 from src.use_cases.patient.create import CreatePatientUseCase
-from src.use_cases.patient.fetch import FetchPatientUseCase
+from src.use_cases.patient.fetch_all import FetchPatientUseCase
 from src.dtos.patient.create import CreatePatientDTO, CreatePatientResponseDTO
 from src.use_cases.patient.fetch_by_id import FetchPatientByIdUseCase
 
@@ -25,7 +25,7 @@ class PatientController:
             payload=CreatePatientDTO(name=payload.name, document=payload.document)
         )
 
-    async def fetch(self) -> ReadPatientResponseDTO:
+    async def fetch_all(self) -> ReadPatientResponseDTO:
         return await self.fetch_use_case.execute()
 
     async def fetch_by_id(self, patient_id: int) -> ReadPatientResponseDTO:

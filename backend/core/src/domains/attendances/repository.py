@@ -35,14 +35,7 @@ class AttendanceRepository(ABC):
         pass
 
     @abstractmethod
-    async def fetch_by_id(self, attendance_id: UUID) -> Attendance:
-        """
-        Fetch an attendance by its ID.
-        """
-        pass
-
-    @abstractmethod
-    async def fetch_by_patient(self, patient_id: UUID) -> Attendance:
+    async def fetch_by_patient(self, patient_id: UUID) -> list[Attendance]:
         """
         Fetch all attendances related to a specific patient.
         """

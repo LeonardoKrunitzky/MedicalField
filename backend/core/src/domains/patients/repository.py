@@ -13,7 +13,7 @@ class PatientRepository(ABC):
         pass
 
     @abstractmethod
-    async def fetch(self) -> list[Patient]:
+    async def fetch_all(self) -> list[Patient]:
         """
         Fetch all patients.
         :return: A list of patient dictionaries.

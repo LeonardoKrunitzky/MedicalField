@@ -1,5 +1,6 @@
 from injector import inject
 
+from src.config.errors.db_exceptions import handle_database_error
 from src.utils.uuid5 import generate_uuid5
 from src.dtos.patient.create import CreatePatientDTO, CreatePatientResponseDTO
 from src.services.patient.service import PatientService
@@ -19,4 +20,6 @@ class CreatePatientUseCase:
 
             return CreatePatientResponseDTO(**patient)
         except Exception as e:
-            raise ValueError(f"Create patient failed: {str(e)}")
+            handle_database_error(
+                e, custom_conflict_msg="Já existe um paciente cadastrado com este documento."
+            )

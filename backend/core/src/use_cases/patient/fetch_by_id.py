@@ -1,5 +1,7 @@
+from fastapi import HTTPException, status
 from injector import inject
 
+from src.config.errors.db_exceptions import handle_database_error
 from src.dtos.patient.read import ReadPatientByIdDTO, Patient
 from src.services.patient.service import PatientService
 
@@ -14,7 +16,10 @@ class FetchPatientByIdUseCase:
             patient = await self.patient_service.fetch_by_id(patient_id=payload.id)
 
             if not patient:
-                return None
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Paciente não encontrado.",
+                )
 
             return Patient(
                 id=patient.id,
@@ -23,4 +28,4 @@ class FetchPatientByIdUseCase:
                 created_at=patient.created_at,
             )
         except Exception as e:
-            raise ValueError(f"Fetch Patient by id failed: {str(e)}")
+            handle_database_error(e)

@@ -48,4 +48,4 @@ class ReadAttendanceResponseDTO(BaseModel):
     items: list[Attendance] = Field(description="A list of medication objects")
 
 class ReadAttendancesByPatientDTO(BaseModel):
-    patient_id: UUID = Field(description="The unique identifier of the patient")
+    id: UUID = Field(description="The unique identifier of the patient")

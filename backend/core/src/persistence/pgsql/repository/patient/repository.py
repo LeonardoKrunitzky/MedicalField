@@ -17,7 +17,7 @@ class PatientRepositoryPostgreSQL(PostgresqlBase, PatientRepository):
     def __init__(self, db: PostgreSQLClient):
         super().__init__(db)
 
-    async def fetch(self) -> list[Patient]:
+    async def fetch_all(self) -> list[Patient]:
         rows = await self._execute_query(FETCH_QUERY)
 
         if not rows:

@@ -16,7 +16,12 @@ router = APIRouter(
     "/",
     summary="Create patient",
     status_code=201,
-    response_model=CreatePatientResponseDTO
+    response_model=CreatePatientResponseDTO,
+    responses={
+        409: {"description": "Paciente já cadastrado (documento duplicado)"},
+        401: {"description": "Não autorizado"},
+        500: {"description": "Erro interno no servidor"},
+    },
 )
 async def create(
     payload: CreatePatientDTO,
@@ -29,17 +34,26 @@ async def create(
     summary="Fetch patients",
     status_code=200,
     response_model=ReadPatientResponseDTO,
+    responses={
+        401: {"description": "Não autorizado"},
+        500: {"description": "Erro interno no servidor"},
+    },
 )
-async def fetch(
+async def fetch_all(
     controller: PatientController = Injected(PatientController),
 ):
-    return await controller.fetch()
+    return await controller.fetch_all()
 
 @router.get(
     "/{patient_id}",
     summary="Fetch patient by id",
     status_code=200,
     response_model=Patient,
+    responses={
+        404: {"description": "Paciente não encontrado"},
+        401: {"description": "Não autorizado"},
+        500: {"description": "Erro interno no servidor"},
+    },
 )
 async def fetch_by_id(
     patient_id: UUID,

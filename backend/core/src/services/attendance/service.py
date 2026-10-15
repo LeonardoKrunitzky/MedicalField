@@ -42,8 +42,5 @@ class AttendanceService:
     async def fetch_all(self) ->list[Attendance]:
         return await self._repository.fetch_all()
 
-    async def fetch_by_id(self, attendance_id: UUID) -> Attendance:
-        return await self._repository.fetch_by_id(attendance_id)
-
     async def fetch_by_patient(self, patient_id: UUID) -> list[Attendance]:
         return await self._repository.fetch_by_patient(patient_id)

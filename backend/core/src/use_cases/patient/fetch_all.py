@@ -10,7 +10,7 @@ class FetchPatientUseCase:
 
     async def execute(self) -> ReadPatientResponseDTO:
         try:
-            patients = await self.patient_service.fetch()
+            patients = await self.patient_service.fetch_all()
             return ReadPatientResponseDTO(items=patients)
         except Exception as e:
             raise ValueError(f"Fetch patients failed: {str(e)}")

@@ -1,6 +1,12 @@
+from fastapi import HTTPException, status
 from injector import inject
 
-from src.dtos.attendance.read import Attendance, ReadAttendancesByPatientDTO
+from src.config.errors.db_exceptions import handle_database_error
+from src.dtos.attendance.read import (
+    Attendance,
+    ReadAttendanceResponseDTO,
+    ReadAttendancesByPatientDTO,
+)
 from src.services.attendance.service import AttendanceService
 
 
@@ -9,27 +15,20 @@ class FetchAttendancesByPatientUseCase:
     def __init__(self, attendance_service: AttendanceService):
         self.attendance_service = attendance_service
 
-    async def execute(self, patient_id: ReadAttendancesByPatientDTO) -> Attendance:
+    async def execute(
+        self, payload: ReadAttendancesByPatientDTO
+    ) -> ReadAttendanceResponseDTO:
         try:
-            attendance = await self.attendance_service.fetch_by_patient(
-                patient_id=patient_id
+            attendances = await self.attendance_service.fetch_by_patient(
+                patient_id=payload.id
             )
-            if not attendance:
-                return None
 
-            return [
-                Attendance(
-                    id=attendance.id,
-                    medical_record_id=attendance.medical_record_id,
-                    professional_id=attendance.professional_id,
-                    pressure=attendance.pressure,
-                    heart_rate=attendance.heart_rate,
-                    consciousness_level=attendance.consciousness_level,
-                    triage_protocol=attendance.triage_protocol,
-                    notes=attendance.notes,
-                    created_at=attendance.created_at,
-                    synchronized_at=attendance.synchronized_at,
+            if not attendances:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Atendimento não encontrado.",
                 )
-            ]
+
+            return ReadAttendanceResponseDTO(items=attendances)
         except Exception as e:
-            raise ValueError(f"Fetch attendances by patient failed: {str(e)}")
+            handle_database_error(e)
