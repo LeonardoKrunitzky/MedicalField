@@ -1,4 +1,4 @@
-.PHONY: project-up project-down core-install core tracing communication-install communication up
+.PHONY: up down install-deps run-core run-tracing run-communication
 
 # Variáveis de diretório
 CORE_DIR = backend/core
@@ -8,18 +8,15 @@ TRACING_DIR = backend/tracing
 # ==========================================
 # DOCKER & DATABASES (Postgres e SQLite via compose)
 # ==========================================
-project-up:
+up:
 	docker-compose up -d --build
 
-project-down:
+down:
 	docker-compose down
 
 # ==========================================
 # BACKEND CORE (PYTHON / UVICORN)
 # ==========================================
-install-core:
-	cd $(CORE_DIR) && uv sync
-
 run-core:
 	cd $(CORE_DIR) && PYTHONPATH=src uv run uvicorn routes.server:app \
 		--reload \
@@ -30,19 +27,18 @@ run-core:
 # TRACING (GO)
 # ==========================================
 run-tracing:
-	cd $(TRACING_DIR) && go run main.go
+	cd $(TRACING_DIR) && go run .
 
 # ==========================================
 # COMMUNICATION (TS / NODE)
 # ==========================================
-install-communication:
-	cd $(COMMUNICATION_DIR) && npm install
-
 run-communication:
 	cd $(COMMUNICATION_DIR) && npm run dev
 
 # ==========================================
 # COMANDOS GLOBAIS
 # ==========================================
-# Para rodar isso, use: make -j 4 up
-up: project-up core tracing communication
+install-deps:
+	cd $(CORE_DIR) && uv sync
+	cd $(TRACING_DIR) && go mod tidy && go test ./... && go build
+	cd $(COMMUNICATION_DIR) && npm install

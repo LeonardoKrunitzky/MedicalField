@@ -2,7 +2,7 @@ from uuid import UUID
 
 from injector import inject
 
-from backend.core.src.domains.medication.repository import MedicationRepository
+from src.domains.medication.repository import MedicationRepository
 
 
 class MedicationService:

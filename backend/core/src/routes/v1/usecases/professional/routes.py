@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 
-from src.dtos.professional.create import CreateProfessionalDTO
-from backend.core.src.controller.professional.controller import ProfessionalController
+from src.controller.professional.controller import ProfessionalController
 from src.dtos.professional.login import LoginRequestDTO, LoginResponseDTO
 from fastapi_injector import Injected
 
@@ -9,18 +8,6 @@ router = APIRouter(
     prefix="/professional",
     tags=["professional"],
 )
-
-
-@router.post(
-    "/register",
-    summary="Register a new user",
-    status_code=201,
-)
-async def register(
-    payload: CreateProfessionalDTO,
-    controller: ProfessionalController = Injected(ProfessionalController),
-):
-    await controller.register(payload=payload)
 
 
 @router.post(

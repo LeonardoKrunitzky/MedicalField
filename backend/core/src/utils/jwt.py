@@ -27,3 +27,16 @@ def create_access_token(data: dict) -> str:
     encoded_jwt = jwt.encode(to_encode, secret_key, algorithm="HS256")
 
     return encoded_jwt
+
+def decode_access_token(token: str) -> dict:
+    """
+    Decodes a JSON Web Token (JWT) for user login using python-jose.
+
+    Args:
+        token (str): The encoded JWT as a string.
+
+    Returns:
+        dict: A dictionary containing the payload information.
+    """
+    secret_key = os.getenv("JWT_SECRET_KEY", "")
+    return jwt.decode(token, secret_key, algorithms=["HS256"])

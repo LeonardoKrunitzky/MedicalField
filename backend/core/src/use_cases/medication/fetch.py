@@ -1,5 +1,6 @@
 from injector import inject
 
+from src.dtos.medication.read import ReadMedicationResponseDTO
 from src.services.medication import MedicationService
 
 
@@ -11,6 +12,7 @@ class FetchMedicationUseCase:
 
     async def execute(self):
         try:
-            return await self.medication_service.fetch_medications()
+            result = await self.medication_service.fetch_medications()
+            return ReadMedicationResponseDTO(items=result)
         except Exception as e:
             raise ValueError(f"Fetch medications failed: {str(e)}")

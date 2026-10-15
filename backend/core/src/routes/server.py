@@ -6,7 +6,7 @@ from fastapi_injector import attach_injector
 
 from src.connections.pgsql.connection import PostgreSQLClient
 from src.config.dependency_injection.container import container
-from src.middleware.Tracing import TracingMiddleware
+from src.middleware.tracing import TracingMiddleware
 from src.routes.v1.router import router as v1
 
 @asynccontextmanager

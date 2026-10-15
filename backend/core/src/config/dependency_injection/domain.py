@@ -1,7 +1,8 @@
 from injector import (Module, provider, singleton)
 
-from backend.core.src.domains.medication.repository import MedicationRepository
-from backend.core.src.persistence.repository.professional.repository import ProfessionalRepositoryPostgreSQL
+from src.persistence.pgsql.repository.medication.repository import MedicationRepositoryPostgreSQL
+from src.domains.medication.repository import MedicationRepository
+from src.persistence.pgsql.repository.professional.repository import ProfessionalRepositoryPostgreSQL
 from src.connections.pgsql.connection import PostgreSQLClient
 from src.domains.professional.repository import ProfessionalRepository
 

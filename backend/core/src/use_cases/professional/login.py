@@ -1,6 +1,5 @@
 from injector import inject
 
-from utils.bcrypt import verify_password
 from src.dtos.professional.login import LoginRequestDTO, LoginResponseDTO
 from src.services.professional import ProfessionalServices
 from utils.jwt import create_access_token
@@ -15,7 +14,7 @@ class LoginUseCase:
         try:
             user = await self.professional_service.read_by_professional_registration(payload.professional_registration)
 
-            if not user or not verify_password(payload.password, user.password):
+            if not user:
                 raise ValueError("Invalid username or password")
 
             token_payload = {
