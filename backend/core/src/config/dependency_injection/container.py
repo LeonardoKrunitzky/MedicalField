@@ -1,8 +1,10 @@
 from injector import Injector
 
-from backend.core.src.config.dependency_injection.domain import DomainModule
+from src.config.dependency_injection.clients import ClientsModule
+from src.config.dependency_injection.domain import DomainModule
 
 
 container = Injector([
     DomainModule(),
+    ClientsModule()
 ])

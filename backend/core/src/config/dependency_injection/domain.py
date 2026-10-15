@@ -1,11 +1,12 @@
-from injector import (Module, provide, singleton)
+from injector import (Module, provider, singleton)
 
-from backend.core.src.connections.pgsql.connection import PostgreSQLClient
-from backend.core.src.domains.authentication.repository import AuthenticationRepository
+from src.persistence.repository.professional.professional import ProfessionalRepositoryPostgreSQL
+from src.connections.pgsql.connection import PostgreSQLClient
+from src.domains.professional.repository import ProfessionalRepository
 
 
 class DomainModule(Module):
-    @provide
+    @provider
     @singleton
-    def provide_authentication_repository(self, client: PostgreSQLClient) -> AuthenticationRepository:
-        return AuthenticationRepositoryPostgreSQL(client=client)
+    def provide_professional_repository(self, client: PostgreSQLClient) -> ProfessionalRepository:
+        return ProfessionalRepositoryPostgreSQL(db=client)

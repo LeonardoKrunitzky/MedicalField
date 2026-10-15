@@ -20,13 +20,16 @@ project-down:
 core-install:
 	cd $(CORE_DIR) && uv sync
 
-core:
-	cd $(CORE_DIR) && uv run uvicorn main:app --reload --port 8000
+run-core:
+	cd $(CORE_DIR) && PYTHONPATH=src uv run uvicorn routes.server:app \
+		--reload \
+		--host 0.0.0.0 \
+		--port 8000
 
 # ==========================================
 # TRACING (GO)
 # ==========================================
-tracing:
+run-tracing:
 	cd $(TRACING_DIR) && go run main.go
 
 # ==========================================
