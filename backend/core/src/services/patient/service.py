@@ -3,7 +3,7 @@ from uuid import UUID
 from injector import inject
 
 from src.domains.patients.entity import Patient
-from src.domains.patients.repository import PatientRepository
+from src.domains.patients.repository import PatientOfflineRepository, PatientRepository
 
 
 class PatientService:
@@ -19,3 +19,11 @@ class PatientService:
 
     async def fetch_by_id(self, patient_id: UUID) -> Patient:
         return await self._repository.fetch_by_id(patient_id=patient_id)
+
+class PatientOfflineService:
+    @inject
+    def __init__(self, repository: PatientOfflineRepository):
+        self._repository = repository
+
+    async def save_patient_offline(self, id: UUID, name: str, document: str, professional_id: UUID) -> Patient:
+        return await self._repository.save_patient_offline(id=id, name=name, document=document, professional_id=professional_id)

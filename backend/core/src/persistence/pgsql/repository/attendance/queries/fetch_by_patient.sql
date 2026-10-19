@@ -9,8 +9,7 @@ SELECT
     attendances.consciousness_level,
     attendances.triage_protocol,
     attendances.notes,
-    attendances.created_at,
-    attendances.synchronized_at
+    attendances.created_at
 FROM attendances
 INNER JOIN medical_records ON attendances.medical_record_id = medical_records.id
 INNER JOIN patients ON medical_records.patient_id = patients.id

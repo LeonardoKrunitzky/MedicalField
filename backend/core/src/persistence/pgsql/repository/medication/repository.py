@@ -1,4 +1,5 @@
 from pathlib import Path
+from uuid import UUID
 
 from src.connections.pgsql.base import PostgresqlBase
 from src.connections.pgsql.connection import PostgreSQLClient
@@ -12,11 +13,19 @@ FETCH_QUERY = (_QUERIES_DIR / "fetch.sql").read_text(
 FETCH_BY_ATTENDANCE_QUERY = (_QUERIES_DIR / "fetch_by_attendance.sql").read_text(
     encoding="utf-8"
 )
+CREATE_QUERY = (_QUERIES_DIR / "create.sql").read_text(
+    encoding="utf-8"
+)
 
 class MedicationRepositoryPostgreSQL(PostgresqlBase, MedicationRepository):
 
     def __init__(self, db: PostgreSQLClient) -> None:
         super().__init__(db)
+
+    async def create(self, id: UUID, name: str, standard_dosage: str) -> Medication:
+        return await self._execute_command(
+            query=CREATE_QUERY, params={"id": id, "name": name, "standard_dosage": standard_dosage}
+        )
 
     async def fetch_all(self) -> list[Medication]:
         rows = await self._execute_query(query=FETCH_QUERY)

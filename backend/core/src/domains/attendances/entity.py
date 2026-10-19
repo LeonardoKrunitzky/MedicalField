@@ -14,4 +14,3 @@ class Attendances(BaseModel):
     consciousness_level: str = Field(description="The consciousness level of the patient")
     triage_protocol: str = Field(description="The triage protocol used for the patient")
     notes: str = Field(description="The notes associated with the attendance")
-    synchronized_at: datetime = Field(description="The date and time when the attendance was synchronized with the external system")

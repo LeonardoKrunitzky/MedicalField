@@ -11,6 +11,7 @@ _QUERIES_DIR = Path(__file__).resolve().parent / "queries"
 READ_BY_REGISTRATION_QUERY = (_QUERIES_DIR / "read_by_registration.sql").read_text(
     encoding="utf-8"
 )
+FETCH_ALL_QUERY = (_QUERIES_DIR / "fetch_all.sql").read_text(encoding="utf-8")
 
 
 class ProfessionalRepositoryPostgreSQL(PostgresqlBase, ProfessionalRepository):
@@ -30,3 +31,11 @@ class ProfessionalRepositoryPostgreSQL(PostgresqlBase, ProfessionalRepository):
             return None
 
         return rows[0]
+
+    async def fetch_all(self) -> list[Professional]:
+        rows = await self._execute_query(FETCH_ALL_QUERY)
+
+        if not rows:
+            return []
+
+        return rows

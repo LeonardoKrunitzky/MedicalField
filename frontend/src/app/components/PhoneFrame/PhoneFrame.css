@@ -1,0 +1,133 @@
+.phone-environment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: calc(100vh - 60px);
+  background: radial-gradient(circle at top, #1e293b, #0f172a);
+  padding: 20px;
+}
+
+.simulator-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #ffffff;
+  padding: 10px 20px;
+  border-radius: 50px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  margin-bottom: 20px;
+}
+
+.sim-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.status-dot.online { background: #10b981; box-shadow: 0 0 8px #10b981; }
+.status-dot.offline { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 24px;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #ef4444;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+input:checked + .slider { background-color: #10b981; }
+input:checked + .slider:before { transform: translateX(22px); }
+
+.sync-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+}
+.sync-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.phone-mockup {
+  width: 390px;
+  height: 760px;
+  background: #f8fafc;
+  border-radius: 46px;
+  border: 12px solid #090d16;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 0 0 2px #334155;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.phone-notch {
+  width: 130px;
+  height: 24px;
+  background: #090d16;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.phone-statusbar {
+  height: 36px;
+  background: #0f172a;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.phone-screen {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-home-indicator {
+  width: 120px;
+  height: 5px;
+  background: #cbd5e1;
+  border-radius: 10px;
+  margin: 8px auto;
+}

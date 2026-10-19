@@ -27,3 +27,12 @@ class PatientRepository(ABC):
         :return: A dictionary representing the patient.
         """
         pass
+
+class PatientOfflineRepository(ABC):
+    @abstractmethod
+    async def save_patient_offline(self, id: UUID, name: str, document: str, professional_id: UUID) -> Patient:
+        """
+        Create a new patient.
+        :return: A dictionary representing the created patient.
+        """
+        pass

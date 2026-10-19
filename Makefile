@@ -21,7 +21,7 @@ run-core:
 	cd $(CORE_DIR) && PYTHONPATH=src uv run uvicorn routes.server:app \
 		--reload \
 		--host 0.0.0.0 \
-		--port 8000
+		--port 8080
 
 # ==========================================
 # TRACING (GO)

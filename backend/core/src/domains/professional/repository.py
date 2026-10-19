@@ -7,11 +7,9 @@ from src.domains.professional.entity import Professional
 class ProfessionalRepository(ABC):
     @abstractmethod
     async def fetch_by_professional_registration(self, professional_registration: str, password: str) -> Professional:
-        """
-        Read a user with the given username and password.
+        pass
 
-        :param username: The username of the user.
-        :param password: The password of the user.
-        :return: A user object.
-        """
+    @abstractmethod
+    async def fetch_all(self) -> list[Professional]:
+        """Busca todos os profissionais cadastrados."""
         pass

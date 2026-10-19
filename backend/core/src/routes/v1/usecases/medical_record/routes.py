@@ -26,8 +26,10 @@ router = APIRouter(
 )
 async def create(
     payload: CreateMedicalRecordDTO,
+    current_user: dict = Depends(verify_token),
     controller: MedicalRecordController = Injected(MedicalRecordController),
 ):
+    payload.professional_id = UUID(str(current_user.get("sub")))
     return await controller.create(payload)
 
 @router.get(

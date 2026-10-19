@@ -28,3 +28,18 @@ class MedicalRecordRepository(ABC):
     @abstractmethod
     async def fetch_by_id(self, patient_id: UUID) -> MedicalRecord:
         pass
+
+
+class MedicalRecordOfflineRepository(ABC):
+    @abstractmethod
+    async def save_medical_record_offline(
+        self,
+        id: UUID,
+        patient_id: UUID,
+        blood_type: str,
+        known_allergies: str,
+        chronic_conditions: str,
+        emergency_contact: str,
+        professional_id: UUID,
+    ) -> MedicalRecord:
+        pass

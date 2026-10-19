@@ -1,5 +1,6 @@
 SELECT 
     medical_records.id,
+    patients.id as patient_id,
     patients.name as patient_name,
     medical_records.blood_type,
     medical_records.known_allergies,

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_injector import attach_injector
 
+from src.connections.sqlite.connection import SQLiteClient
 from src.connections.pgsql.connection import PostgreSQLClient
 from src.config.dependency_injection.container import container
 from src.middleware.tracing import TracingMiddleware
@@ -11,12 +12,15 @@ from src.routes.v1.router import router as v1
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    client = container.get(PostgreSQLClient)
-    await client.connect()
+    client_pgsql = container.get(PostgreSQLClient)
+    client_sqlite = container.get(SQLiteClient)
+    await client_pgsql.connect()
+    await client_sqlite.connect()
 
     yield
 
-    await client.disconnect()
+    await client_pgsql.disconnect()
+    await client_sqlite.disconnect()
 
 app = FastAPI(
     title="Medical Field API",

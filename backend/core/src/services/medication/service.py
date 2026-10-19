@@ -12,8 +12,15 @@ class MedicationService:
     def __init__(self, repository: MedicationRepository):
         self._repository = repository
 
+    async def create(self, id: UUID, name: str, standard_dosage: str) -> Medication:
+        return await self._repository.create(
+            id=id, name=name, standard_dosage=standard_dosage
+        )
+
     async def fetch_all(self) -> list[Medication]:
         return await self._repository.fetch_all()
 
-    async def fetch_by_attendance(self, attendance_id: UUID) -> list[MedicationByAttendance]:
+    async def fetch_by_attendance(
+        self, attendance_id: UUID
+    ) -> list[MedicationByAttendance]:
         return await self._repository.fetch_by_attendance(attendance_id=attendance_id)

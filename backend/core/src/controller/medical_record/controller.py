@@ -36,15 +36,26 @@ class MedicalRecordController:
     async def create(
         self, request: CreateMedicalRecordDTO
     ) -> CreateMedicalRecordResponseDTO:
-        return await self.create_use_case.execute(
-            CreateMedicalRecordDTO(
-                patient_id=request.patient_id,
-                blood_type=request.blood_type,
-                known_allergies=request.known_allergies,
-                chronic_conditions=request.chronic_conditions,
-                emergency_contact=request.emergency_contact,
+        if request.is_offline:
+            return await self.create_use_case.execute_offline(
+                CreateMedicalRecordDTO(
+                    patient_id=request.patient_id,
+                    blood_type=request.blood_type,
+                    known_allergies=request.known_allergies,
+                    chronic_conditions=request.chronic_conditions,
+                    emergency_contact=request.emergency_contact,
+                )
             )
-        )
+        else:
+            return await self.create_use_case.execute(
+                CreateMedicalRecordDTO(
+                    patient_id=request.patient_id,
+                    blood_type=request.blood_type,
+                    known_allergies=request.known_allergies,
+                    chronic_conditions=request.chronic_conditions,
+                    emergency_contact=request.emergency_contact,
+                )
+            )
 
     async def fetch_all(self) -> ReadMedicalRecordsResponseDTO:
         return await self.fetch_all_use_case.execute()

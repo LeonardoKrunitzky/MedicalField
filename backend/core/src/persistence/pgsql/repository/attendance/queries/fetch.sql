@@ -1,6 +1,7 @@
 SELECT 
     attendances.id,
     patients.name as patient_name,
+    professionals.id as professional_id,
     professionals.name as professional_name,
     medical_records.id as medical_record_id,
     attendances.patient_id,
@@ -9,8 +10,7 @@ SELECT
     attendances.consciousness_level,
     attendances.triage_protocol,
     attendances.notes,
-    attendances.created_at,
-    attendances.synchronized_at
+    attendances.created_at
 FROM attendances
 INNER JOIN medical_records ON attendances.medical_record_id = medical_records.id
 INNER JOIN patients ON medical_records.patient_id = patients.id

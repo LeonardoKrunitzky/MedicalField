@@ -31,8 +31,7 @@ WITH inserted_attendance AS (
         heart_rate,
         consciousness_level,
         triage_protocol,
-        notes,
-        synchronized_at
+        notes
 ),
 inserted_medications AS (
     INSERT INTO attendance_medications (

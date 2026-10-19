@@ -27,7 +27,7 @@ class FetchMedicationByAttendanceUseCase:
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Medicamento não encontrado.",
                 )
-
+            print(medications)
             return ReadMedicationByAttendanceResponceDTO(items=medications)
         except Exception as e:
             handle_database_error(e)

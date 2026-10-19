@@ -6,6 +6,9 @@ from datetime import datetime
 
 class MedicalRecord(BaseModel):
     id: UUID = Field(description="The unique identifier of the medical record")
+    patient_id: UUID = Field(
+        description="The unique identifier of the patient associated with the medical record"
+    )
     patient_name: str = Field(
         description="The unique identifier of the patient associated with the medical record"
     )
@@ -22,6 +25,7 @@ class MedicalRecord(BaseModel):
 
 class ReadMedicalRecordsResponseDTO(BaseModel):
     items: list[MedicalRecord] = Field(description="A list of medication objects")
+
 
 class ReadMedicalRecordByIdDTO(BaseModel):
     id: UUID = Field(description="The unique identifier of the patient")

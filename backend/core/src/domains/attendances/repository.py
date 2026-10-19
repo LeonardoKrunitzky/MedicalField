@@ -40,3 +40,25 @@ class AttendanceRepository(ABC):
         Fetch all attendances related to a specific patient.
         """
         pass
+
+
+class AttendanceOfflineRepository(ABC):
+    @abstractmethod
+    async def save_attendance_offline(
+        self,
+        id: UUID,
+        medical_record_id: UUID,
+        professional_id: UUID,
+        patient_id: UUID,
+        pressure: str,
+        heart_rate: int,
+        consciousness_level: int,
+        triage_protocol: str,
+        notes: Optional[str],
+        medications: Optional[List[CreateAttendanceMedicationDTO]],
+    ) -> Attendance:
+        """
+        Create a new attendance.
+        :return: A dictionary representing the created attendance.
+        """
+        pass

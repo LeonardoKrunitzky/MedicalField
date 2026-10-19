@@ -2,7 +2,7 @@ from uuid import UUID
 
 from injector import inject
 
-from src.domains.medical_records.repository import MedicalRecordRepository
+from src.domains.medical_records.repository import MedicalRecordOfflineRepository, MedicalRecordRepository
 from src.dtos.medical_record.read import MedicalRecord
 
 
@@ -37,3 +37,29 @@ class MedicalRecordService:
 
     async def fetch_by_id(self, patient_id: UUID) -> MedicalRecord:
         return await self._repository.fetch_by_id(patient_id)
+
+
+class MedicalRecordOfflineService:
+    @inject
+    def __init__(self, repository: MedicalRecordOfflineRepository):
+        self._repository = repository
+
+    async def save_medical_record_offline(
+        self,
+        id: UUID,
+        patient_id: UUID,
+        blood_type: str,
+        known_allergies: str,
+        chronic_conditions: str,
+        emergency_contact: str,
+        professional_id: UUID
+    ) -> MedicalRecord:
+        return await self._repository.save_medical_record_offline(
+            id=id,
+            patient_id=patient_id,
+            blood_type=blood_type,
+            known_allergies=known_allergies,
+            chronic_conditions=chronic_conditions,
+            emergency_contact=emergency_contact,
+            professional_id=professional_id
+        )

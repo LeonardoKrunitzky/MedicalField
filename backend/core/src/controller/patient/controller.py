@@ -21,9 +21,14 @@ class PatientController:
         
 
     async def create(self, payload: CreatePatientDTO) -> CreatePatientResponseDTO:
-        return await self.create_use_case.execute(
-            payload=CreatePatientDTO(name=payload.name, document=payload.document)
-        )
+        if payload.is_offline:
+            return await self.create_use_case.execute_offline(
+                payload=CreatePatientDTO(name=payload.name, document=payload.document)
+            )
+        else:
+            return await self.create_use_case.execute(
+                payload=CreatePatientDTO(name=payload.name, document=payload.document)
+            )
 
     async def fetch_all(self) -> ReadPatientResponseDTO:
         return await self.fetch_use_case.execute()

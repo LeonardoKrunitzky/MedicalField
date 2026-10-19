@@ -27,8 +27,10 @@ router = APIRouter(
 )
 async def create(
     payload: CreateAttendanceDTO,
+    current_user: dict = Depends(verify_token),
     controller: AttendanceController = Injected(AttendanceController),
 ):
+    payload.professional_id = UUID(str(current_user.get("sub")))
     return await controller.create(payload)
 
 

@@ -18,6 +18,9 @@ class Attendance(BaseModel):
     medical_record_id: UUID = Field(
         description="The unique identifier of the medical record associated with the attendance"
     )
+    professional_id: UUID = Field(
+        description="The unique identifier of the professional associated with the attendance"
+    )
     professional_name: str = Field(
         description="The unique identifier of the professional associated with the attendance"
     )
@@ -38,9 +41,6 @@ class Attendance(BaseModel):
     )
     created_at: datetime = Field(
         description="The timestamp when the attendance was created"
-    )
-    synchronized_at: Optional[datetime] = Field(
-        description="The timestamp when the attendance was last synchronized"
     )
 
 

@@ -6,12 +6,17 @@ from src.domains.professional.entity import Professional
 from src.domains.professional.repository import ProfessionalRepository
 
 
-class ProfessionalServices:
+class ProfessionalService:
     @inject
     def __init__(self, repository: ProfessionalRepository):
         self._repository = repository
 
-    async def fetch_by_professional_registration(self, professional_registration: str) -> Professional:
+    async def fetch_by_professional_registration(
+        self, professional_registration: str
+    ) -> Professional:
         return await self._repository.fetch_by_professional_registration(
             professional_registration=professional_registration
         )
+
+    async def fetch_all(self) -> list[Professional]:
+        return await self._repository.fetch_all()

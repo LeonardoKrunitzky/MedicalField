@@ -5,24 +5,26 @@ from typing import Any
 from pydantic import BaseModel
 
 
-def _extract_ids(data: Any) -> Any:
+def _extract_ids(data: Any, includes_data: bool = False) -> Any:
     """
-    Percorre dicionários e listas recursivamente, mantendo apenas
-    chaves que sejam 'id' ou terminem com '_id'.
+    Recursively traverses dictionaries and lists, keeping only
+    keys that are 'id', end with '_id', or end with '_at' if includes_data is True.
     """
     if isinstance(data, dict):
         extracted = {}
         for key, value in data.items():
-            if key == "id" or key.endswith("_id") or key.endswith("_at"):
+            is_valid = key == "id" or key.endswith("_id") or (includes_data and key.endswith("_at"))
+            if is_valid:
                 extracted[key] = value
             elif isinstance(value, (dict, list)):
-                nested = _extract_ids(value)
+                nested = _extract_ids(value, includes_data)
                 if nested:
+                
                     extracted[key] = nested
         return extracted
 
     if isinstance(data, list):
-        extracted_list = [_extract_ids(item) for item in data]
+        extracted_list = [_extract_ids(item, includes_data) for item in data]
         return [item for item in extracted_list if item]
 
     return None
@@ -30,11 +32,13 @@ def _extract_ids(data: Any) -> Any:
 
 def generate_uuid5(
     payload: BaseModel, 
-    extra_id: str | uuid.UUID | None = None
+    extra_id: str | uuid.UUID | None = None,
+    includes_data: bool = False
 ) -> uuid.UUID:
     """
-    Gera um UUIDv5 determinístico utilizando apenas os campos de ID ('id' e '*_id')
-    presentes no payload Pydantic (e um extra_id opcional para tabelas filhas).
+    Generates a deterministic UUIDv5 using only ID fields ('id' and '*_id')
+    present in the Pydantic payload (and optional extra_id for child tables),
+    including '*_at' fields if includes_data is True.
     """
     if not isinstance(payload, BaseModel):
         raise TypeError(
@@ -56,15 +60,11 @@ def generate_uuid5(
         else json.loads(payload.json())
     )
 
-    # Filtra apenas 'id' e '*_id' (incluindo os medication_id dentro de medications)
-    id_data = _extract_ids(raw_data)
+    id_data = _extract_ids(raw_data, includes_data)
 
-    # Fallback: se o DTO não tiver nenhum '_id' (ex: CreatePatientDTO que só tem name e document),
-    # usa os dados normais do payload para não gerar o mesmo UUID para todos os pacientes
     if not id_data:
         id_data = raw_data
 
-    # Se for uma entidade filha (ex: medicação de um atendimento), vincula ao ID pai
     if extra_id is not None:
         id_data["_parent_id"] = str(extra_id)
 

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -12,6 +13,8 @@ class CreateMedicalRecordDTO(BaseModel):
     emergency_contact: str = Field(
         description="The emergency contact information for the patient"
     )
+    is_offline: Optional[bool] = Field(default=False, description="Indicates whether the attendance was recorded offline or online")
+    professional_id: Optional[UUID] = Field(default=None, description="The unique identifier of the professional associated with the attendance")
 
 
 class CreateMedicalRecordResponseDTO(BaseModel):

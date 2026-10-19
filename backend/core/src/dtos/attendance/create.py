@@ -18,7 +18,9 @@ class CreateAttendanceDTO(BaseModel):
     consciousness_level: int = Field(description="The level of consciousness of the patient during the attendance")
     triage_protocol: str = Field(description="The triage protocol used during the attendance")
     notes: Optional[str]  = Field(description="Any additional notes about the attendance")
-    medications: Optional[List[CreateAttendanceMedicationDTO]] = Field(description="A list of medications administered during the attendance") 
+    medications: Optional[List[CreateAttendanceMedicationDTO]] = Field(description="A list of medications administered during the attendance")
+    is_offline: Optional[bool] = Field(default=False, description="Indicates whether the attendance was recorded offline or online")
+    professional_id: Optional[UUID] = Field(default=None, description="The unique identifier of the professional associated with the attendance")
 
 
 class CreateAttendanceResponseDTO(BaseModel):
@@ -32,4 +34,3 @@ class CreateAttendanceResponseDTO(BaseModel):
     consciousness_level: int = Field(description="The consciousness level of the patient")
     triage_protocol: str = Field(description="The triage protocol used for the patient")
     notes: str = Field(description="The notes associated with the attendance")
-    synchronized_at: Optional[datetime] = Field(description="The date and time when the attendance was synchronized with the external system")
