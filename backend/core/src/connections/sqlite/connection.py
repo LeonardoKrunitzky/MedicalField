@@ -120,21 +120,8 @@ class SQLiteClient(BaseClient):
                     consciousness_level INTEGER,
                     triage_protocol TEXT,
                     notes TEXT,
-                    synchronized_at TEXT,
                     patient_id TEXT,
                     medications_json TEXT,
-                    is_synced INTEGER DEFAULT 0
-                );
-            """)
-
-            # 6. Medicações Aplicadas no Atendimento
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS attendance_medications (
-                    id TEXT PRIMARY KEY,
-                    attendance_id TEXT NOT NULL,
-                    medication_id TEXT NOT NULL,
-                    applied_dose TEXT,
-                    applied_at TEXT,
                     is_synced INTEGER DEFAULT 0
                 );
             """)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, Field
 
@@ -14,6 +15,7 @@ class MedicationByAttendance(BaseModel):
     standard_dosage: str = Field(description="The standard dosage of the medication")
     applied_dose: str = Field(description="The dose of the medication that was applied")
     applied_at: datetime = Field(description="The date and time when the medication was applied")
+    is_synced: Optional[bool] = Field(default=False, description="Indicates whether the attendance was synced or not")
 
 class ReadMedicationResponseDTO(BaseModel):
     items: list[Medication] = Field(description="A list of medication objects")

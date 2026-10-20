@@ -28,7 +28,7 @@ class CreateAttendanceUseCase:
         try:
             medications_list = []
 
-            for med in payload.medications:
+            for med in payload.medications or []:
                 med_dto = CreateAttendanceMedicationDTO(
                     medication_id=med.medication_id,
                     applied_dose=med.applied_dose,
@@ -55,7 +55,7 @@ class CreateAttendanceUseCase:
                 consciousness_level=payload.consciousness_level,
                 triage_protocol=payload.triage_protocol,
                 notes=payload.notes,
-                medications=json.dumps(medications_list),
+                medications=json.dumps(medications_list), 
             )
 
             return CreateAttendanceResponseDTO(
@@ -79,7 +79,8 @@ class CreateAttendanceUseCase:
     async def execute_offline(self, payload: CreateAttendanceDTO):
         try:
             medications_list = []
-            for med in payload.medications:
+            
+            for med in payload.medications or []:
                 med_dto = CreateAttendanceMedicationDTO(
                     medication_id=med.medication_id,
                     applied_dose=med.applied_dose,
@@ -106,7 +107,7 @@ class CreateAttendanceUseCase:
                 consciousness_level=payload.consciousness_level,
                 triage_protocol=payload.triage_protocol,
                 notes=payload.notes,
-                medications=json.dumps(medications_list),
+                medications=medications_list,
             )
 
             return CreateAttendanceResponseDTO(

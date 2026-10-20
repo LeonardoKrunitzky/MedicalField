@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -20,6 +21,9 @@ class MedicalRecord(BaseModel):
     )
     created_at: datetime = Field(
         description="The date and time when the medical record was created"
+    )
+    is_synced: Optional[bool] = Field(
+        default=False, description="Indicates whether the attendance was synced or not"
     )
 
 

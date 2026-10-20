@@ -42,6 +42,7 @@ class Attendance(BaseModel):
     created_at: datetime = Field(
         description="The timestamp when the attendance was created"
     )
+    is_synced: Optional[bool] = Field(default=False, description="Indicates whether the attendance was synced or not")
 
 
 class ReadAttendanceResponseDTO(BaseModel):

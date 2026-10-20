@@ -13,13 +13,17 @@ def _extract_ids(data: Any, includes_data: bool = False) -> Any:
     if isinstance(data, dict):
         extracted = {}
         for key, value in data.items():
-            is_valid = key == "id" or key.endswith("_id") or (includes_data and key.endswith("_at"))
+            is_valid = key != "professional_id" and (
+                key == "id"
+                or key.endswith("_id")
+                or (includes_data and key.endswith("_at"))
+            )
             if is_valid:
                 extracted[key] = value
             elif isinstance(value, (dict, list)):
                 nested = _extract_ids(value, includes_data)
                 if nested:
-                
+
                     extracted[key] = nested
         return extracted
 
@@ -30,11 +34,7 @@ def _extract_ids(data: Any, includes_data: bool = False) -> Any:
     return None
 
 
-def generate_uuid5(
-    payload: BaseModel, 
-    extra_id: str | uuid.UUID | None = None,
-    includes_data: bool = False
-) -> uuid.UUID:
+def generate_uuid5(payload: BaseModel, includes_data: bool = False) -> uuid.UUID:
     """
     Generates a deterministic UUIDv5 using only ID fields ('id' and '*_id')
     present in the Pydantic payload (and optional extra_id for child tables),
@@ -55,18 +55,15 @@ def generate_uuid5(
         raise ValueError(f"Invalid UUID in 'UUID_NAMESPACE': {namespace_env}") from err
 
     raw_data = (
-        payload.model_dump(mode="json")
+        payload.model_dump(mode="json", exclude_none=True)
         if hasattr(payload, "model_dump")
-        else json.loads(payload.json())
+        else json.loads(payload.json(exclude_none=True))
     )
 
     id_data = _extract_ids(raw_data, includes_data)
 
     if not id_data:
         id_data = raw_data
-
-    if extra_id is not None:
-        id_data["_parent_id"] = str(extra_id)
 
     serialized_payload = json.dumps(
         id_data,
