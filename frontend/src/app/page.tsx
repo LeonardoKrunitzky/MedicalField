@@ -8,19 +8,17 @@ import Portal from './components/Portal/Portal';
 import Login from './components/Login/Login';
 
 export default function HomePage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<'portal' | 'client'>('client');
+  const [isPortalAuthenticated, setIsPortalAuthenticated] =
+    useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<'portal' | 'client'>('portal');
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (token) {
-      setIsAuthenticated(true);
+    const portalAuth = localStorage.getItem('portal_authenticated');
+    if (token && portalAuth === 'true') {
+      setIsPortalAuthenticated(true);
     }
   }, []);
-
-  if (!isAuthenticated) {
-    return <Login onLoginSuccess={() => setIsAuthenticated(true)} />;
-  }
 
   return (
     <NetworkProvider>
@@ -49,7 +47,7 @@ export default function HomePage() {
               color: '#fff',
             }}
           >
-            🖥️ Visão Portal
+            🖥️ Visão Portal (Nuvem)
           </button>
           <button
             type="button"
@@ -65,29 +63,40 @@ export default function HomePage() {
           >
             📱 Visão Cliente (App Socorrista)
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              localStorage.removeItem('access_token');
-              setIsAuthenticated(false);
-            }}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 6,
-              border: 'none',
-              background: '#dc2626',
-              color: '#fff',
-              cursor: 'pointer',
-            }}
-          >
-            Sair
-          </button>
+          {viewMode === 'portal' && isPortalAuthenticated && (
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem('portal_authenticated');
+                setIsPortalAuthenticated(false);
+              }}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 6,
+                border: 'none',
+                background: '#dc2626',
+                color: '#fff',
+                cursor: 'pointer',
+              }}
+            >
+              Sair do Portal
+            </button>
+          )}
         </div>
       </header>
 
       <main style={{ background: '#f8fafc', minHeight: 'calc(100vh - 60px)' }}>
         {viewMode === 'portal' ? (
-          <Portal />
+          isPortalAuthenticated ? (
+            <Portal />
+          ) : (
+            <Login
+              onLoginSuccess={() => {
+                localStorage.setItem('portal_authenticated', 'true');
+                setIsPortalAuthenticated(true);
+              }}
+            />
+          )
         ) : (
           <PhoneFrame>
             <Client />

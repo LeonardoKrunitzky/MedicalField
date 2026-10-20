@@ -4,6 +4,8 @@ export interface CreateMedicalRecordDTO {
   known_allergies: string;
   chronic_conditions: string;
   emergency_contact: string;
+  is_offline?: boolean;
+  professional_id?: string;
 }
 
 export interface MedicalRecord {

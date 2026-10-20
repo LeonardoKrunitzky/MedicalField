@@ -3,11 +3,13 @@ import { authService } from './authService';
 import { medicalRecordService } from './medicalRecordService';
 import { medicationService } from './medicationService';
 import { patientService } from './patientService';
+import { syncService } from './syncService';
 import type {
   Attendance,
   CreateAttendanceDTO,
   CreateMedicalRecordDTO,
   CreatePatientDTO,
+  LocalCacheData,
   LoginRequestDTO,
   LoginResponseDTO,
   MedicalRecord,
@@ -49,4 +51,10 @@ export const coreService = {
     attendanceService.getAttendancesByPatient(patientId),
   createAttendance: async (data: CreateAttendanceDTO): Promise<Attendance> =>
     attendanceService.createAttendance(data),
+
+  // Rotas de Sincronização (SQLite <-> PostgreSQL)
+  syncPull: async () => syncService.syncPull(),
+  syncPush: async () => syncService.syncPush(),
+  fetchOfflineData: async (): Promise<LocalCacheData> =>
+    syncService.fetchOfflineData(),
 };

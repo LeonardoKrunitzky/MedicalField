@@ -9,7 +9,13 @@ interface PhoneFrameProps {
 }
 
 export default function PhoneFrame({ children }: PhoneFrameProps) {
-  const { isOnline, setIsOnline, outboxQueue, isSyncing, handleManualSync } = useNetwork();
+  const {
+    isOnline,
+    setIsOnline,
+    isSyncing,
+    hasPendingOfflineChanges,
+    handleManualSync,
+  } = useNetwork();
 
   return (
     <div className="phone-environment">
@@ -34,7 +40,11 @@ export default function PhoneFrame({ children }: PhoneFrameProps) {
           onClick={handleManualSync}
           disabled={!isOnline || isSyncing}
         >
-          {isSyncing ? 'Sincronizando...' : `🔄 Sincronizar (${outboxQueue.length})`}
+          {isSyncing
+            ? 'Sincronizando...'
+            : hasPendingOfflineChanges
+            ? '🔄 Sincronizar (Pendente)'
+            : '🔄 Sincronizar (Pull SQLite)'}
         </button>
       </div>
 

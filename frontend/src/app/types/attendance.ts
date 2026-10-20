@@ -2,13 +2,14 @@ import type { CreateAttendanceMedicationDTO } from './medication';
 
 export interface CreateAttendanceDTO {
   medical_record_id: string;
-  professional_id: string;
+  professional_id?: string;
   patient_id: string;
   pressure: string;
   heart_rate: number;
   consciousness_level: number;
   triage_protocol: string;
   notes?: string;
+  is_offline?: boolean;
   medications?: CreateAttendanceMedicationDTO[];
 }
 

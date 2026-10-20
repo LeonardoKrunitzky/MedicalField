@@ -1,14 +1,14 @@
-import { api } from './api';
+import { api } from "./api";
 import type {
   Attendance,
   CreateAttendanceDTO,
   ReadAttendanceResponseDTO,
-} from '../types';
+} from "../types";
 
 export const attendanceService = {
   getAttendances: async (): Promise<Attendance[]> => {
     const res = await api.get<ReadAttendanceResponseDTO | Attendance[]>(
-      '/core/usecases/attendance/',
+      "/core/usecases/attendance/",
     );
     return Array.isArray(res.data) ? res.data : res.data?.items || [];
   },
@@ -21,7 +21,13 @@ export const attendanceService = {
   },
 
   createAttendance: async (data: CreateAttendanceDTO): Promise<Attendance> => {
-    const res = await api.post<Attendance>('/core/usecases/attendance/', data);
+    const isOffline = Boolean(data.is_offline);
+    const payload = { ...data, is_offline: isOffline };
+    const res = await api.post<Attendance>(
+      "/core/usecases/attendance/",
+      payload,
+      { params: { is_offline: isOffline } },
+    );
     return res.data;
   },
 };

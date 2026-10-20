@@ -27,12 +27,15 @@ export const medicalRecordService = {
     return res.data;
   },
 
-  createMedicalRecord: async (
+createMedicalRecord: async (
     data: CreateMedicalRecordDTO,
   ): Promise<MedicalRecord> => {
+    const isOffline = Boolean(data.is_offline);
+    const payload = { ...data, is_offline: isOffline };
     const res = await api.post<MedicalRecord>(
       '/core/usecases/medical-record/',
-      data,
+      payload,
+      { params: { is_offline: isOffline } },
     );
     return res.data;
   },

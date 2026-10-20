@@ -1,14 +1,14 @@
-import { api } from './api';
+import { api } from "./api";
 import type {
   CreatePatientDTO,
   Patient,
   ReadPatientResponseDTO,
-} from '../types';
+} from "../types";
 
 export const patientService = {
   getPatients: async (): Promise<Patient[]> => {
     const res = await api.get<ReadPatientResponseDTO | Patient[]>(
-      '/core/usecases/patient/',
+      "/core/usecases/patient/",
     );
     return Array.isArray(res.data) ? res.data : res.data?.items || [];
   },
@@ -19,7 +19,11 @@ export const patientService = {
   },
 
   createPatient: async (data: CreatePatientDTO): Promise<Patient> => {
-    const res = await api.post<Patient>('/core/usecases/patient/', data);
+    const isOffline = Boolean(data.is_offline);
+    const payload = { ...data, is_offline: isOffline };
+    const res = await api.post<Patient>("/core/usecases/patient/", payload, {
+      params: { is_offline: isOffline },
+    });
     return res.data;
   },
 };

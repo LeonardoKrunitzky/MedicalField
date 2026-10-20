@@ -6,28 +6,43 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useRef,
   ReactNode,
 } from 'react';
 import { coreService } from '../app/services/coreService';
-import {
-  OutboxItem,
-  OutboxOperationType,
-  LocalCacheData,
-  CreatePatientDTO,
-  CreateMedicalRecordDTO,
-  CreateAttendanceDTO,
-} from '../app/types';
+import type { LocalCacheData } from '../app/types';
+
+const OFFLINE_COOKIE_NAME = 'mf_offline_data';
+
+// Utilitários para gravar e ler os dados do SQLite no Cookie
+const setCookieData = (name: string, value: LocalCacheData, days = 7) => {
+  if (typeof document === 'undefined') return;
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  const serialized = encodeURIComponent(JSON.stringify(value));
+  document.cookie = `${name}=${serialized}; expires=${expires}; path=/; SameSite=Lax`;
+};
+
+const getCookieData = (name: string): LocalCacheData | null => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+  if (match) {
+    try {
+      return JSON.parse(decodeURIComponent(match[2]));
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
 
 interface NetworkContextType {
   isOnline: boolean;
   setIsOnline: React.Dispatch<React.SetStateAction<boolean>>;
-  outboxQueue: OutboxItem[];
   localCache: LocalCacheData;
   isSyncing: boolean;
-  enqueueOperation: (
-    type: OutboxOperationType,
-    payload: CreatePatientDTO | CreateMedicalRecordDTO | CreateAttendanceDTO
-  ) => void;
+  hasPendingOfflineChanges: boolean;
+  markOfflineChange: () => void;
+  refreshOfflineCookie: () => Promise<LocalCacheData | undefined>;
   handleManualSync: () => Promise<void>;
 }
 
@@ -36,68 +51,42 @@ const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 export const NetworkProvider = ({ children }: { children: ReactNode }) => {
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [outboxQueue, setOutboxQueue] = useState<OutboxItem[]>([]);
+  const [hasPendingOfflineChanges, setHasPendingOfflineChanges] =
+    useState<boolean>(false);
   const [localCache, setLocalCache] = useState<LocalCacheData>({
     patients: [],
     medicalRecords: [],
+    attendances: [],
     medications: [],
   });
 
-  // Carrega dados salvos do localStorage apenas no cliente (evita erro de SSR do Next.js)
-  useEffect(() => {
-    const savedOutbox = localStorage.getItem('mf_outbox');
-    if (savedOutbox) {
-      try {
-        setOutboxQueue(JSON.parse(savedOutbox));
-      } catch {}
-    }
+  const prevOnlineRef = useRef<boolean>(isOnline);
 
-    const savedCache = localStorage.getItem('mf_cache');
-    if (savedCache) {
-      try {
-        setLocalCache(JSON.parse(savedCache));
-      } catch {}
+  // Carrega inicialmente os dados que já estavam salvos no Cookie
+  useEffect(() => {
+    const cookieCache = getCookieData(OFFLINE_COOKIE_NAME);
+    if (cookieCache) {
+      setLocalCache(cookieCache);
     }
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('mf_outbox', JSON.stringify(outboxQueue));
-  }, [outboxQueue]);
-
-  useEffect(() => {
-    localStorage.setItem('mf_cache', JSON.stringify(localCache));
-  }, [localCache]);
-
-  const enqueueOperation = (
-    type: OutboxOperationType,
-    payload: CreatePatientDTO | CreateMedicalRecordDTO | CreateAttendanceDTO
-  ) => {
-    const tempId = crypto.randomUUID();
-    const item: OutboxItem = {
-      tempId,
-      type,
-      payload,
-      createdAt: new Date().toISOString(),
-    };
-
-    setOutboxQueue((prev) => [...prev, item]);
-
-    if (type === 'PATIENT') {
-      const p = payload as CreatePatientDTO;
-      setLocalCache((prev) => ({
-        ...prev,
-        patients: [...prev.patients, { id: tempId, name: p.name, document: p.document }],
-      }));
-    } else if (type === 'MEDICAL_RECORD') {
-      const mr = payload as CreateMedicalRecordDTO;
-      setLocalCache((prev) => ({
-        ...prev,
-        medicalRecords: [...prev.medicalRecords, { id: tempId, ...mr }],
-      }));
+  // Chama GET /fetchOfflineData (SQLite) e armazena o retorno no Cookie
+  const refreshOfflineCookie = useCallback(async () => {
+    try {
+      const offlineData = await coreService.fetchOfflineData();
+      setLocalCache(offlineData);
+      setCookieData(OFFLINE_COOKIE_NAME, offlineData);
+      return offlineData;
+    } catch (error) {
+      console.error('Erro ao buscar dados do SQLite (fetchOfflineData):', error);
     }
-  };
+  }, []);
 
-  // Baixa os catálogos  para o cache local do dispositivo
+  const markOfflineChange = useCallback(() => {
+    setHasPendingOfflineChanges(true);
+  }, []);
+
+  // PULL: Traz dados do PostgreSQL (Online) para o SQLite (Offline) e salva fetchOfflineData no Cookie
   const pullFromServer = useCallback(async () => {
     if (!isOnline) {
       alert('Dispositivo Offline! Mude o seletor para Online para sincronizar.');
@@ -105,71 +94,56 @@ export const NetworkProvider = ({ children }: { children: ReactNode }) => {
     }
     setIsSyncing(true);
     try {
-      const [patients, medicalRecords, medications] = await Promise.all([
-        coreService.getPatients(),
-        coreService.getMedicalRecords(),
-        coreService.getMedications(),
-      ]);
-      setLocalCache({ patients, medicalRecords, medications });
+      await coreService.syncPull();
+      await refreshOfflineCookie();
     } catch (error) {
-      console.error('Erro ao baixar catálogo:', error);
+      console.error('Erro ao executar Pull e salvar no Cookie:', error);
+      alert('Erro ao sincronizar dados do PostgreSQL para o SQLite.');
     } finally {
       setIsSyncing(false);
     }
-  }, [isOnline]);
+  }, [isOnline, refreshOfflineCookie]);
 
-  // Envia a fila Outbox acumulada em modo Offline para o servidor
-  const pushOutboxToServer = useCallback(async () => {
-    if (!isOnline || outboxQueue.length === 0) return;
-
+  // PUSH: Envia registros pendentes do SQLite para o PostgreSQL, atualiza via Pull e salva no Cookie
+  const pushToServer = useCallback(async () => {
+    if (!isOnline) return;
     setIsSyncing(true);
-    console.log('[Observer] Conectividade Online! Enviando fila Outbox...');
-
-    const remainingQueue: OutboxItem[] = [];
-
-    for (const item of outboxQueue) {
-      try {
-        if (item.type === 'PATIENT') {
-          await coreService.createPatient(item.payload as CreatePatientDTO);
-        } else if (item.type === 'MEDICAL_RECORD') {
-          await coreService.createMedicalRecord(item.payload as CreateMedicalRecordDTO);
-        } else if (item.type === 'ATTENDANCE') {
-          await coreService.createAttendance(item.payload as CreateAttendanceDTO);
-        }
-      } catch (err) {
-        console.error(`Falha ao sincronizar ${item.type}:`, err);
-        remainingQueue.push(item);
-      }
+    try {
+      await coreService.syncPush();
+      await coreService.syncPull();
+      await refreshOfflineCookie();
+      setHasPendingOfflineChanges(false);
+      alert('Sincronização (SQLite -> PostgreSQL) concluída e Cookie atualizado!');
+    } catch (error) {
+      console.error('Erro ao fazer Push do SQLite para o PostgreSQL:', error);
+      alert('Erro ao enviar dados offline para a nuvem.');
+    } finally {
+      setIsSyncing(false);
     }
+  }, [isOnline, refreshOfflineCookie]);
 
-    setOutboxQueue(remainingQueue);
-    await pullFromServer();
-    setIsSyncing(false);
-
-    if (remainingQueue.length === 0) {
-      alert('Sincronização automática concluída com sucesso!');
-    }
-  }, [isOnline, outboxQueue, pullFromServer]);
-
-  // ====================================================================
-  // PADRÃO OBSERVER: Observa a transição de `isOnline` para disparar sync
-  // ====================================================================
+  // PADRÃO OBSERVER: Observa a transição de Offline -> Online para disparar o Push
   useEffect(() => {
-    if (isOnline && outboxQueue.length > 0) {
-      pushOutboxToServer();
-    }
-  }, [isOnline, outboxQueue.length, pushOutboxToServer]);
+    const transitionedToOnline = !prevOnlineRef.current && isOnline;
+    prevOnlineRef.current = isOnline;
 
+    if (transitionedToOnline && hasPendingOfflineChanges) {
+      console.log('[Observer] Conectividade Online restabelecida! Disparando Push...');
+      pushToServer();
+    }
+  }, [isOnline, hasPendingOfflineChanges, pushToServer]);
+
+  // Botão "Sincronizar": Executa o Pull (PGSQL -> SQLite) e armazena fetchOfflineData no Cookie
   const handleManualSync = async () => {
     if (!isOnline) {
       alert('Você está Offline! Ative o toggle para Online antes de sincronizar.');
       return;
     }
-    if (outboxQueue.length > 0) {
-      await pushOutboxToServer();
+    if (hasPendingOfflineChanges) {
+      await pushToServer();
     } else {
       await pullFromServer();
-      alert('Dados sincronizados a partir do Portal com sucesso!');
+      alert('Sincronização concluída! Dados do SQLite armazenados no Cookie.');
     }
   };
 
@@ -178,10 +152,11 @@ export const NetworkProvider = ({ children }: { children: ReactNode }) => {
       value={{
         isOnline,
         setIsOnline,
-        outboxQueue,
         localCache,
         isSyncing,
-        enqueueOperation,
+        hasPendingOfflineChanges,
+        markOfflineChange,
+        refreshOfflineCookie,
         handleManualSync,
       }}
     >

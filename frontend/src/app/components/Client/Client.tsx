@@ -4,21 +4,61 @@ import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useNetwork } from '../../../context/NetworkContext';
 import { coreService } from '../../services/coreService';
-import {
+import type {
+  LoginRequestDTO,
   CreatePatientDTO,
   CreateMedicalRecordDTO,
   CreateAttendanceDTO,
 } from '../../types';
 import './Client.css';
 
-type TabType = 'attendance' | 'patient' | 'record' | 'outbox';
+type TabType = 'attendance' | 'patient' | 'record' | 'sqlite_data';
 
 export default function Client() {
   const [activeTab, setActiveTab] = useState<TabType>('attendance');
-  const { isOnline, localCache, outboxQueue, enqueueOperation, handleManualSync } =
+  const [isClientAuthenticated, setIsClientAuthenticated] =
+    useState<boolean>(false);
+
+  const { isOnline, localCache, markOfflineChange, refreshOfflineCookie } =
     useNetwork();
 
-  // 1. Formulário de Paciente
+  useEffect(() => {
+    const clientToken = localStorage.getItem('client_authenticated');
+    if (clientToken === 'true' && localStorage.getItem('access_token')) {
+      setIsClientAuthenticated(true);
+    }
+  }, []);
+
+  // 0. Autenticação Exclusiva do Cliente
+  const { register: regLogin, handleSubmit: submitLogin } =
+    useForm<LoginRequestDTO>();
+
+  const onClientLogin = async (data: LoginRequestDTO) => {
+    try {
+      const res = await coreService.login(data);
+      localStorage.setItem('access_token', res.access_token);
+      localStorage.setItem('client_authenticated', 'true');
+
+      try {
+        const payload = JSON.parse(atob(res.access_token.split('.')[1]));
+        if (payload.sub) {
+          localStorage.setItem('professional_id', payload.sub);
+        }
+      } catch {}
+
+      setIsClientAuthenticated(true);
+      await refreshOfflineCookie();
+    } catch {
+      alert('Credenciais inválidas no aplicativo do Socorrista!');
+    }
+  };
+
+  const handleClientLogout = () => {
+    localStorage.removeItem('client_authenticated');
+    setIsClientAuthenticated(false);
+  };
+
+  // 1. Criar Paciente (passando is_offline: true)
   const {
     register: regPatient,
     handleSubmit: submitPatient,
@@ -26,22 +66,24 @@ export default function Client() {
   } = useForm<CreatePatientDTO>();
 
   const onSavePatient = async (data: CreatePatientDTO) => {
-    if (isOnline) {
-      try {
-        await coreService.createPatient(data);
-        alert('Paciente salvo!');
-        await handleManualSync();
-      } catch (e: any) {
-        alert('Erro ao cadastrar paciente: ' + (e.response?.data?.detail || e.message));
-      }
-    } else {
-      enqueueOperation('PATIENT', data);
-      alert('Offline: Paciente adicionado na fila local (Outbox)!');
+    try {
+      await coreService.createPatient({
+        ...data,
+        is_offline: true,
+      });
+      markOfflineChange();
+      await refreshOfflineCookie();
+      alert('Paciente registrado no SQLite (is_offline: true)!');
+      resetPatient();
+    } catch (e: any) {
+      alert(
+        'Erro ao cadastrar paciente: ' +
+          (e.response?.data?.detail || e.message),
+      );
     }
-    resetPatient();
   };
 
-  // 2. Formulário de Prontuário
+  // 2. Criar Prontuário (passando is_offline: true)
   const {
     register: regRecord,
     handleSubmit: submitRecord,
@@ -49,42 +91,35 @@ export default function Client() {
   } = useForm<CreateMedicalRecordDTO>();
 
   const onSaveRecord = async (data: CreateMedicalRecordDTO) => {
-    if (isOnline) {
-      try {
-        await coreService.createMedicalRecord(data);
-        alert('Prontuário salvo!');
-        await handleManualSync();
-      } catch (e: any) {
-        alert('Erro ao salvar prontuário: ' + (e.response?.data?.detail || e.message));
-      }
-    } else {
-      enqueueOperation('MEDICAL_RECORD', data);
-      alert('Offline: Prontuário adicionado na fila local (Outbox)!');
+    try {
+      await coreService.createMedicalRecord({
+        ...data,
+        is_offline: true,
+      });
+      markOfflineChange();
+      await refreshOfflineCookie();
+      alert('Prontuário registrado no SQLite (is_offline: true)!');
+      resetRecord();
+    } catch (e: any) {
+      alert(
+        'Erro ao salvar prontuário: ' +
+          (e.response?.data?.detail || e.message),
+      );
     }
-    resetRecord();
   };
 
-  // 3. Formulário de Atendimento
+  // 3. Criar Atendimento (passando is_offline: true)
   const {
     register: regAtt,
     control: controlAtt,
     handleSubmit: submitAtt,
     reset: resetAtt,
-    setValue: setAttValue,
   } = useForm<CreateAttendanceDTO>({
     defaultValues: {
-      professional_id: '',
       consciousness_level: 15,
       medications: [],
     },
   });
-
-  useEffect(() => {
-    const profId = localStorage.getItem('professional_id');
-    if (profId) {
-      setAttValue('professional_id', profId);
-    }
-  }, [setAttValue]);
 
   const { fields, append, remove } = useFieldArray({
     control: controlAtt,
@@ -92,15 +127,18 @@ export default function Client() {
   });
 
   const onSaveAttendance = async (data: CreateAttendanceDTO) => {
+    const professionalId = localStorage.getItem('professional_id') || undefined;
+
     const payload: CreateAttendanceDTO = {
       medical_record_id: data.medical_record_id,
-      professional_id: data.professional_id,
+      professional_id: professionalId,
       patient_id: data.patient_id,
       pressure: data.pressure,
       heart_rate: Number(data.heart_rate),
       consciousness_level: Number(data.consciousness_level),
       triage_protocol: data.triage_protocol,
       notes: data.notes || '',
+      is_offline: true,
       medications: (data.medications || []).map((m) => ({
         medication_id: m.medication_id,
         applied_dose: m.applied_dose,
@@ -108,27 +146,87 @@ export default function Client() {
       })),
     };
 
-    if (isOnline) {
-      try {
-        await coreService.createAttendance(payload);
-        alert('Atendimento registrado!');
-      } catch (e: any) {
-        alert('Erro ao registrar atendimento: ' + (e.response?.data?.detail || e.message));
-      }
-    } else {
-      enqueueOperation('ATTENDANCE', payload);
-      alert('Offline: Atendimento salvo na fila Outbox!');
+    try {
+      await coreService.createAttendance(payload);
+      markOfflineChange();
+      await refreshOfflineCookie();
+      alert('Atendimento registrado no SQLite (is_offline: true)!');
+      resetAtt();
+    } catch (e: any) {
+      alert(
+        'Erro ao registrar atendimento: ' +
+          (e.response?.data?.detail || e.message),
+      );
     }
-    resetAtt();
   };
+
+  // Se o cliente não estiver autenticado, exibe a tela de login interna do celular
+  if (!isClientAuthenticated) {
+    return (
+      <div className="client-app">
+        <header className="client-header">
+          <h3>🚑 MedicalField App</h3>
+          <span className={`badge ${isOnline ? 'bg-green' : 'bg-red'}`}>
+            {isOnline ? 'Online' : 'Offline'}
+          </span>
+        </header>
+
+        <div
+          className="client-body"
+          style={{ display: 'flex', alignItems: 'center' }}
+        >
+          <form
+            onSubmit={submitLogin(onClientLogin)}
+            className="mobile-form"
+            style={{ width: '100%' }}
+          >
+            <h4>🔐 Login do Socorrista</h4>
+            <label>Registro Profissional (CRM/COREN)</label>
+            <input
+              placeholder="Ex: CRM12345"
+              {...regLogin('professional_registration', { required: true })}
+            />
+
+            <label>Senha</label>
+            <input
+              type="password"
+              placeholder="******"
+              {...regLogin('password', { required: true })}
+            />
+
+            <button type="submit" className="btn-submit">
+              Entrar no Dispositivo
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="client-app">
       <header className="client-header">
         <h3>🚑 MedicalField App</h3>
-        <span className={`badge ${isOnline ? 'bg-green' : 'bg-red'}`}>
-          {isOnline ? 'Online' : 'Offline'}
-        </span>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <span className={`badge ${isOnline ? 'bg-green' : 'bg-red'}`}>
+            {isOnline ? 'Online' : 'Offline'}
+          </span>
+          <button
+            type="button"
+            onClick={handleClientLogout}
+            style={{
+              background: '#dc2626',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 4,
+              padding: '2px 6px',
+              fontSize: 11,
+              cursor: 'pointer',
+            }}
+          >
+            Sair
+          </button>
+        </div>
       </header>
 
       <div className="client-body">
@@ -151,28 +249,29 @@ export default function Client() {
               <option value="">Selecione...</option>
               {localCache.medicalRecords.map((mr) => (
                 <option key={mr.id} value={mr.id}>
-                  {mr.patient_name || `ID: ${mr.id.slice(0, 6)}`} ({mr.blood_type})
+                  {mr.patient_name || `Prontuário ${mr.id.slice(0, 6)}`} (
+                  {mr.blood_type})
                 </option>
               ))}
             </select>
 
-            <label>ID do Profissional (UUID)</label>
-            <input
-              placeholder="UUID do profissional"
-              {...regAtt('professional_id', { required: true })}
-            />
-
             <div className="row-2">
               <div>
                 <label>Pressão</label>
-                <input placeholder="120/80" {...regAtt('pressure', { required: true })} />
+                <input
+                  placeholder="120/80"
+                  {...regAtt('pressure', { required: true })}
+                />
               </div>
               <div>
                 <label>BPM (Heart Rate)</label>
                 <input
                   type="number"
                   placeholder="80"
-                  {...regAtt('heart_rate', { required: true, valueAsNumber: true })}
+                  {...regAtt('heart_rate', {
+                    required: true,
+                    valueAsNumber: true,
+                  })}
                 />
               </div>
             </div>
@@ -184,7 +283,10 @@ export default function Client() {
                   type="number"
                   min={3}
                   max={15}
-                  {...regAtt('consciousness_level', { required: true, valueAsNumber: true })}
+                  {...regAtt('consciousness_level', {
+                    required: true,
+                    valueAsNumber: true,
+                  })}
                 />
               </div>
               <div>
@@ -199,7 +301,11 @@ export default function Client() {
             </div>
 
             <label>Notas</label>
-            <textarea rows={2} placeholder="Observações..." {...regAtt('notes')} />
+            <textarea
+              rows={2}
+              placeholder="Observações..."
+              {...regAtt('notes')}
+            />
 
             <div className="meds-section">
               <div className="meds-header">
@@ -244,7 +350,11 @@ export default function Client() {
                       required: true,
                     })}
                   />
-                  <button type="button" className="btn-remove" onClick={() => remove(index)}>
+                  <button
+                    type="button"
+                    className="btn-remove"
+                    onClick={() => remove(index)}
+                  >
                     Remover
                   </button>
                 </div>
@@ -261,10 +371,16 @@ export default function Client() {
           <form onSubmit={submitPatient(onSavePatient)} className="mobile-form">
             <h4>Cadastrar Paciente</h4>
             <label>Nome Completo</label>
-            <input placeholder="Nome do paciente" {...regPatient('name', { required: true })} />
+            <input
+              placeholder="Nome do paciente"
+              {...regPatient('name', { required: true })}
+            />
 
             <label>Documento</label>
-            <input placeholder="CPF ou RG" {...regPatient('document', { required: true })} />
+            <input
+              placeholder="CPF ou RG"
+              {...regPatient('document', { required: true })}
+            />
 
             <button type="submit" className="btn-submit">
               Salvar Paciente
@@ -286,16 +402,28 @@ export default function Client() {
             </select>
 
             <label>Tipo Sanguíneo</label>
-            <input placeholder="O+" {...regRecord('blood_type', { required: true })} />
+            <input
+              placeholder="O+"
+              {...regRecord('blood_type', { required: true })}
+            />
 
             <label>Alergias Conhecidas</label>
-            <input placeholder="Nenhuma" {...regRecord('known_allergies', { required: true })} />
+            <input
+              placeholder="Nenhuma"
+              {...regRecord('known_allergies', { required: true })}
+            />
 
             <label>Condições Crônicas</label>
-            <input placeholder="Hipertensão" {...regRecord('chronic_conditions', { required: true })} />
+            <input
+              placeholder="Hipertensão"
+              {...regRecord('chronic_conditions', { required: true })}
+            />
 
             <label>Contato de Emergência</label>
-            <input placeholder="(51) 99999-9999" {...regRecord('emergency_contact', { required: true })} />
+            <input
+              placeholder="(51) 99999-9999"
+              {...regRecord('emergency_contact', { required: true })}
+            />
 
             <button type="submit" className="btn-submit">
               Salvar Prontuário
@@ -303,20 +431,25 @@ export default function Client() {
           </form>
         )}
 
-        {activeTab === 'outbox' && (
+        {activeTab === 'sqlite_data' && (
           <div className="outbox-list">
-            <h4>Fila Outbox ({outboxQueue.length})</h4>
-            {outboxQueue.length === 0 ? (
-              <p className="empty-msg">Nenhum registro pendente de sincronização.</p>
-            ) : (
-              outboxQueue.map((item) => (
-                <div key={item.tempId} className="outbox-card">
-                  <strong>{item.type}</strong>
-                  <span>{new Date(item.createdAt).toLocaleTimeString()}</span>
-                  <pre>{JSON.stringify(item.payload, null, 2)}</pre>
-                </div>
-              ))
-            )}
+            <h4>Dados no Cookie (fetchOfflineData)</h4>
+            <div className="outbox-card">
+              <strong>Pacientes ({localCache.patients.length})</strong>
+              <pre>{JSON.stringify(localCache.patients, null, 2)}</pre>
+            </div>
+            <div className="outbox-card">
+              <strong>Prontuários ({localCache.medicalRecords.length})</strong>
+              <pre>{JSON.stringify(localCache.medicalRecords, null, 2)}</pre>
+            </div>
+            <div className="outbox-card">
+              <strong>Atendimentos ({localCache.attendances.length})</strong>
+              <pre>{JSON.stringify(localCache.attendances, null, 2)}</pre>
+            </div>
+            <div className="outbox-card">
+              <strong>Medicamentos ({localCache.medications.length})</strong>
+              <pre>{JSON.stringify(localCache.medications, null, 2)}</pre>
+            </div>
           </div>
         )}
       </div>
@@ -345,10 +478,10 @@ export default function Client() {
         </button>
         <button
           type="button"
-          className={activeTab === 'outbox' ? 'active' : ''}
-          onClick={() => setActiveTab('outbox')}
+          className={activeTab === 'sqlite_data' ? 'active' : ''}
+          onClick={() => setActiveTab('sqlite_data')}
         >
-          📦 Fila ({outboxQueue.length})
+          🍪 SQLite
         </button>
       </nav>
     </div>

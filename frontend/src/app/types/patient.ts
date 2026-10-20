@@ -1,6 +1,8 @@
 export interface CreatePatientDTO {
   name: string;
   document: string;
+  is_offline?: boolean;
+  professional_id?: string;
 }
 
 export interface Patient {

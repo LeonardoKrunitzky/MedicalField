@@ -15,4 +15,5 @@ export interface LocalCacheData {
   patients: import('./patient').Patient[];
   medicalRecords: import('./medicalRecord').MedicalRecord[];
   medications: import('./medication').Medication[];
+  attendances: import('./attendance').Attendance[];
 }
