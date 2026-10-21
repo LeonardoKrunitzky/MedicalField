@@ -1,3 +1,6 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from injector import inject
 
 from src.config.errors.db_exceptions import handle_database_error
@@ -33,6 +36,7 @@ class CreateMedicalRecordUseCase:
                 known_allergies=payload.known_allergies,
                 chronic_conditions=payload.chronic_conditions,
                 emergency_contact=payload.emergency_contact,
+                created_at=datetime.now(ZoneInfo("America/Sao_Paulo")),
             )
             return CreateMedicalRecordResponseDTO(**medical_record)
         except Exception as e:
@@ -53,7 +57,7 @@ class CreateMedicalRecordUseCase:
                     known_allergies=payload.known_allergies,
                     chronic_conditions=payload.chronic_conditions,
                     emergency_contact=payload.emergency_contact,
-                    professional_id=payload.professional_id
+                    created_at=datetime.now(ZoneInfo("America/Sao_Paulo")),
                 )
             )
             return CreateMedicalRecordResponseDTO(**medical_record)

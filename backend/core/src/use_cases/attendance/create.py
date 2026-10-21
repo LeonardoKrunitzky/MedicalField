@@ -1,4 +1,6 @@
+from datetime import datetime
 import json
+from zoneinfo import ZoneInfo
 
 from injector import inject
 
@@ -55,7 +57,8 @@ class CreateAttendanceUseCase:
                 consciousness_level=payload.consciousness_level,
                 triage_protocol=payload.triage_protocol,
                 notes=payload.notes,
-                medications=json.dumps(medications_list), 
+                medications=medications_list,
+                created_at=datetime.now(ZoneInfo("America/Sao_Paulo")),
             )
 
             return CreateAttendanceResponseDTO(
@@ -108,6 +111,7 @@ class CreateAttendanceUseCase:
                 triage_protocol=payload.triage_protocol,
                 notes=payload.notes,
                 medications=medications_list,
+                created_at=datetime.now(ZoneInfo("America/Sao_Paulo")),
             )
 
             return CreateAttendanceResponseDTO(

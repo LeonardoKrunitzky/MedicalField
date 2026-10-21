@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from injector import inject
@@ -19,6 +20,7 @@ class MedicalRecordService:
         known_allergies: str,
         chronic_conditions: str,
         emergency_contact: str,
+        created_at: datetime,
     ) -> MedicalRecord:
         return await self._repository.create(
             id=id,
@@ -27,6 +29,7 @@ class MedicalRecordService:
             known_allergies=known_allergies,
             chronic_conditions=chronic_conditions,
             emergency_contact=emergency_contact,
+            created_at=created_at
         )
 
     async def fetch_all(self) -> list[MedicalRecord]:
@@ -52,7 +55,7 @@ class MedicalRecordOfflineService:
         known_allergies: str,
         chronic_conditions: str,
         emergency_contact: str,
-        professional_id: UUID
+        created_at: datetime
     ) -> MedicalRecord:
         return await self._repository.save_medical_record_offline(
             id=id,
@@ -61,5 +64,5 @@ class MedicalRecordOfflineService:
             known_allergies=known_allergies,
             chronic_conditions=chronic_conditions,
             emergency_contact=emergency_contact,
-            professional_id=professional_id
+            created_at=created_at
         )

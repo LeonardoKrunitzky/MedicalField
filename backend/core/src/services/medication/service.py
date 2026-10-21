@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from injector import inject
@@ -12,9 +13,9 @@ class MedicationService:
     def __init__(self, repository: MedicationRepository):
         self._repository = repository
 
-    async def create(self, id: UUID, name: str, standard_dosage: str) -> Medication:
+    async def create(self, id: UUID, name: str, standard_dosage: str, created_at: datetime) -> Medication:
         return await self._repository.create(
-            id=id, name=name, standard_dosage=standard_dosage
+            id=id, name=name, standard_dosage=standard_dosage, created_at=created_at
         )
 
     async def fetch_all(self) -> list[Medication]:

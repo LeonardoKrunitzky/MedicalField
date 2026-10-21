@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from uuid import UUID
 
 from src.domains.medication.entity import Medication
@@ -7,7 +8,7 @@ from src.dtos.medication.read import MedicationByAttendance
 class MedicationRepository(ABC):
 
     @abstractmethod
-    async def create(self, id: UUID, name: str, standard_dosage: str) -> Medication:
+    async def create(self, id: UUID, name: str, standard_dosage: str, created_at: datetime) -> Medication:
         pass
 
     @abstractmethod

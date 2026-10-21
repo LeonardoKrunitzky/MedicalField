@@ -21,9 +21,7 @@ export const patientService = {
   createPatient: async (data: CreatePatientDTO): Promise<Patient> => {
     const isOffline = Boolean(data.is_offline);
     const payload = { ...data, is_offline: isOffline };
-    const res = await api.post<Patient>("/core/usecases/patient/", payload, {
-      params: { is_offline: isOffline },
-    });
+    const res = await api.post<Patient>("/core/usecases/patient/", payload);
     return res.data;
   },
 };

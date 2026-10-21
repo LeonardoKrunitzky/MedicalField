@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -22,9 +23,9 @@ class MedicationRepositoryPostgreSQL(PostgresqlBase, MedicationRepository):
     def __init__(self, db: PostgreSQLClient) -> None:
         super().__init__(db)
 
-    async def create(self, id: UUID, name: str, standard_dosage: str) -> Medication:
+    async def create(self, id: UUID, name: str, standard_dosage: str, created_at: datetime) -> Medication:
         return await self._execute_command(
-            query=CREATE_QUERY, params={"id": id, "name": name, "standard_dosage": standard_dosage}
+            query=CREATE_QUERY, params={"id": id, "name": name, "standard_dosage": standard_dosage, "created_at": created_at}
         )
 
     async def fetch_all(self) -> list[Medication]:

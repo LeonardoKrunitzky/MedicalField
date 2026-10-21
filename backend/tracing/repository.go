@@ -19,10 +19,10 @@ func SaveLog(db *sql.DB, payload LogPayload) error {
 
 	uniqueName := fmt.Sprintf("%s-%s-%d", payload.ClientIP, payload.Route, time.Now().UnixNano())
 	logID := uuid.NewSHA1(namespace, []byte(uniqueName))
-
+	
 	query := `
-		INSERT INTO audit_logs (id, client_ip, professional_id, http_method, route, status_code, processing_time_ms)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO audit_logs (id, client_ip, professional_id, http_method, route, status_code, processing_time_ms, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 	_, err = db.Exec(query,
 		logID.String(),
@@ -32,6 +32,7 @@ func SaveLog(db *sql.DB, payload LogPayload) error {
 		payload.Route,
 		payload.StatusCode,
 		payload.ProcessingTimeMS,
+		payload.CreatedAt,
 	)
 	if err != nil {
 		log.Printf("Database execution error: %v\n", err)

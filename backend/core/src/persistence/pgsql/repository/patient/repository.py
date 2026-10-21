@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -35,9 +36,9 @@ class PatientRepositoryPostgreSQL(PostgresqlBase, PatientRepository):
 
         return rows[0]
 
-    async def create(self, id: UUID, name: str, document: str) -> Patient:
+    async def create(self, id: UUID, name: str, document: str, created_at: datetime) -> Patient:
         return await self._execute_command(
-            query=CREATE_QUERY, params={"id": id, "name": name, "document": document}
+            query=CREATE_QUERY, params={"id": id, "name": name, "document": document, "created_at": created_at}
         )
 
         

@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from pathlib import Path
 from typing import List, Optional
@@ -35,13 +36,14 @@ class AttendanceRepositoryPostgreSQL(PostgresqlBase, AttendanceRepository):
         triage_protocol: str,
         notes: Optional[str],
         medications: Optional[List[CreateAttendanceMedicationDTO]],
+        created_at: datetime,
     ) -> Attendance:
         
-        # 1. Formata os medicamentos convertendo UUID e DateTime para string
+                                                                            
         formatted_meds = []
         if medications:
             for med in medications:
-                # Caso venha como dict (fallback) ou objeto Pydantic
+                                                                    
                 med_data = med if isinstance(med, dict) else med.model_dump()
                 
                 formatted_meds.append({
@@ -51,10 +53,10 @@ class AttendanceRepositoryPostgreSQL(PostgresqlBase, AttendanceRepository):
                     "applied_at": str(med_data.get("applied_at")) if med_data.get("applied_at") else None
                 })
 
-        # 2. Converte a lista formatada em uma string JSON para o PostgreSQL interpretar
+                                                                                        
         medications_json = json.dumps(formatted_meds)
 
-        # 3. Executa a query passando a string JSON
+                                                   
         rows = await self._execute_query(
             CREATE_QUERY,
             params={
@@ -67,7 +69,8 @@ class AttendanceRepositoryPostgreSQL(PostgresqlBase, AttendanceRepository):
                 "consciousness_level": consciousness_level,
                 "triage_protocol": triage_protocol,
                 "notes": notes,
-                "medications": medications_json, # Parâmetro agora é um texto JSON
+                "medications": medications_json,
+                "created_at": created_at
             },
         )
 

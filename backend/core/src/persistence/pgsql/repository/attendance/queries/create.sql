@@ -8,7 +8,8 @@ WITH inserted_attendance AS (
         heart_rate,
         consciousness_level,
         triage_protocol,
-        notes
+        notes,
+        created_at
     )
     VALUES (
         :id,
@@ -19,7 +20,8 @@ WITH inserted_attendance AS (
         :heart_rate,
         :consciousness_level,
         :triage_protocol,
-        :notes
+        :notes,
+        :created_at
     )
     RETURNING
         id,

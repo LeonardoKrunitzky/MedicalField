@@ -1,3 +1,6 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from injector import inject
 
 from src.config.errors.db_exceptions import handle_database_error
@@ -20,7 +23,10 @@ class CreatePatientUseCase:
         try:
 
             patient = await self.patient_service.create(
-                id=generate_uuid5(payload), name=payload.name, document=payload.document
+                id=generate_uuid5(payload),
+                name=payload.name,
+                document=payload.document,
+                created_at=datetime.now(ZoneInfo("America/Sao_Paulo")),
             )
 
             return CreatePatientResponseDTO(**patient)
@@ -33,7 +39,10 @@ class CreatePatientUseCase:
     async def execute_offline(self, payload: CreatePatientDTO):
         try:
             return await self.patient_offline_service.save_patient_offline(
-                id=generate_uuid5(payload), name=payload.name, document=payload.document, professional_id=payload.professional_id
+                id=generate_uuid5(payload),
+                name=payload.name,
+                document=payload.document,
+                created_at=datetime.now(ZoneInfo("America/Sao_Paulo")),
             )
         except Exception as e:
             handle_database_error(e)

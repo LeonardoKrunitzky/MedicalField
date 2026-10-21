@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from uuid import UUID
 
 from src.domains.medical_records.entity import MedicalRecord
@@ -14,6 +15,7 @@ class MedicalRecordRepository(ABC):
         known_allergies: str,
         chronic_conditions: str,
         emergency_contact: str,
+        created_at: datetime,
     ) -> MedicalRecord:
         pass
 
@@ -40,6 +42,6 @@ class MedicalRecordOfflineRepository(ABC):
         known_allergies: str,
         chronic_conditions: str,
         emergency_contact: str,
-        professional_id: UUID,
+        created_at: datetime
     ) -> MedicalRecord:
         pass

@@ -62,7 +62,7 @@ class SQLiteClient(BaseClient):
         with self.get_connection() as conn:
             cursor = conn.cursor()
 
-            # 1. Catálogo local de Medicamentos
+                                               
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS medications (
                     id TEXT PRIMARY KEY,
@@ -72,7 +72,7 @@ class SQLiteClient(BaseClient):
                 );
             """)
 
-            # 2. Profissionais
+                              
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS professionals (
                     id TEXT PRIMARY KEY,
@@ -83,7 +83,7 @@ class SQLiteClient(BaseClient):
                 );
             """)
 
-            # 3. Pacientes
+                          
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS patients (
                     id TEXT PRIMARY KEY,
@@ -94,7 +94,7 @@ class SQLiteClient(BaseClient):
                 );
             """)
 
-            # 4. Prontuários
+                            
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS medical_records (
                     id TEXT PRIMARY KEY,
@@ -108,7 +108,7 @@ class SQLiteClient(BaseClient):
                 );
             """)
 
-            # 5. Atendimentos
+                             
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS attendances (
                     id TEXT PRIMARY KEY,
@@ -126,7 +126,7 @@ class SQLiteClient(BaseClient):
                 );
             """)
 
-            # 7. Logs de Auditoria Offline
+                                          
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS offline_audit_logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,4 +140,15 @@ class SQLiteClient(BaseClient):
                     is_synced INTEGER DEFAULT 0
                 );
             """)
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS professionals (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    professional_registration TEXT NOT NULL,
+                    password TEXT NOT NULL,
+                    created_at TEXT
+                );
+            """)
+            
             conn.commit()

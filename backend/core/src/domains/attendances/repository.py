@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
@@ -20,6 +21,7 @@ class AttendanceRepository(ABC):
         triage_protocol: str,
         notes: Optional[str],
         medications: Optional[List[CreateAttendanceMedicationDTO]],
+        created_at: datetime,
     ) -> Attendance:
         """
         Create a new attendance, including optional attendance_medications.
@@ -56,6 +58,7 @@ class AttendanceOfflineRepository(ABC):
         triage_protocol: str,
         notes: Optional[str],
         medications: Optional[List[CreateAttendanceMedicationDTO]],
+        created_at: datetime,
     ) -> Attendance:
         """
         Create a new attendance.

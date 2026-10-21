@@ -17,6 +17,7 @@ type LogPayload struct {
 	Route            string    `json:"route" example:"/appointments" doc:"Request route"`
 	StatusCode       int       `json:"status_code" example:"201" doc:"HTTP Status Code"`
 	ProcessingTimeMS int       `json:"processing_time_ms" example:"45" doc:"Processing time in milliseconds"`
+	CreatedAt        string     `json:"created_at" example:"1640995200" doc:"Timestamp in seconds"`
 }
 
 type LogInput struct {

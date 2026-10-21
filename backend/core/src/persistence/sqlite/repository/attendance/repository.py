@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from typing import List, Optional
 from uuid import UUID
@@ -8,6 +9,10 @@ from src.domains.attendances.repository import AttendanceOfflineRepository
 from src.dtos.attendance.create import CreateAttendanceMedicationDTO
 from src.dtos.attendance.read import Attendance
 
+
+class AttendanceRepositorySQLite(SqliteBase, AttendanceOfflineRepository):
+    def __init__(self, db: SQLiteClient) -> None:
+        super().__init__(db)
 
 class AttendanceRepositorySQLite(SqliteBase, AttendanceOfflineRepository):
     def __init__(self, db: SQLiteClient) -> None:
@@ -25,15 +30,11 @@ class AttendanceRepositorySQLite(SqliteBase, AttendanceOfflineRepository):
         triage_protocol: str,
         notes: Optional[str],
         medications: Optional[List[CreateAttendanceMedicationDTO]],
+        created_at: datetime,
     ) -> Attendance:
-        """
-        Salva o atendimento offline empacotando os medicamentos em JSON
-        para serem processados posteriormente pelo job de sincronização.
-        """
+        
         record_id = str(id)
-        now = self._now_sp()
 
-        # 1. Prepara a lista de medicamentos e converte para JSON
         meds_list = []
         if medications:
             for med in medications:
@@ -45,17 +46,14 @@ class AttendanceRepositorySQLite(SqliteBase, AttendanceOfflineRepository):
         meds_json = json.dumps(meds_list, default=str)
 
         with self.sqlite.get_connection() as conn:
-            # Busca o nome do paciente para a resposta
             cur_patient = conn.execute("SELECT name FROM patients WHERE id = ?", (str(patient_id),))
             row_patient = cur_patient.fetchone()
             patient_name = row_patient[0] if row_patient else "Paciente não sincronizado"
 
-            # Busca o nome do profissional para a resposta
             cur_prof = conn.execute("SELECT name FROM professionals WHERE id = ?", (str(professional_id),))
             row_prof = cur_prof.fetchone()
             professional_name = row_prof[0] if row_prof else "Profissional não sincronizado"
 
-            # 2. Insere o Atendimento salvando a string JSON diretamente na coluna
             conn.execute(
                 """
                 INSERT INTO attendances 
@@ -72,16 +70,10 @@ class AttendanceRepositorySQLite(SqliteBase, AttendanceOfflineRepository):
                     consciousness_level,
                     triage_protocol,
                     notes,
-                    now,
-                    meds_json, # Coluna restaurada aqui
+                    created_at,
+                    meds_json,
                 ),
             )
-
-            # 3. Registra o log da ação
-            self._log_offline_action(
-                conn, str(professional_id), "POST", "/core/usecases/attendance/"
-            )
-            
             conn.commit()
 
         return Attendance(
@@ -96,5 +88,5 @@ class AttendanceRepositorySQLite(SqliteBase, AttendanceOfflineRepository):
             consciousness_level=consciousness_level,
             triage_protocol=triage_protocol,
             notes=notes,
-            created_at=now
+            created_at=created_at
         )

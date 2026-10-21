@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from injector import inject
@@ -11,8 +12,12 @@ class PatientService:
     def __init__(self, repository: PatientRepository):
         self._repository = repository
 
-    async def create(self, id: UUID, name: str, document: str) -> Patient:
-        return await self._repository.create(id=id, name=name, document=document)
+    async def create(
+        self, id: UUID, name: str, document: str, created_at: datetime
+    ) -> Patient:
+        return await self._repository.create(
+            id=id, name=name, document=document, created_at=created_at
+        )
 
     async def fetch_all(self) -> list[Patient]:
         return await self._repository.fetch_all()
@@ -20,10 +25,22 @@ class PatientService:
     async def fetch_by_id(self, patient_id: UUID) -> Patient:
         return await self._repository.fetch_by_id(patient_id=patient_id)
 
+
 class PatientOfflineService:
     @inject
     def __init__(self, repository: PatientOfflineRepository):
         self._repository = repository
 
-    async def save_patient_offline(self, id: UUID, name: str, document: str, professional_id: UUID) -> Patient:
-        return await self._repository.save_patient_offline(id=id, name=name, document=document, professional_id=professional_id)
+    async def save_patient_offline(
+        self,
+        id: UUID,
+        name: str,
+        document: str,
+        created_at: datetime,
+    ) -> Patient:
+        return await self._repository.save_patient_offline(
+            id=id,
+            name=name,
+            document=document,
+            created_at=created_at,
+        )

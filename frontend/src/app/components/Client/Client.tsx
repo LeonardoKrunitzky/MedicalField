@@ -19,8 +19,13 @@ export default function Client() {
   const [isClientAuthenticated, setIsClientAuthenticated] =
     useState<boolean>(false);
 
-  const { isOnline, localCache, markOfflineChange, refreshOfflineCookie } =
-    useNetwork();
+  const {
+    isOnline,
+    localCache,
+    markOfflineChange,
+    loadOnlineData,
+    refreshOfflineCookie,
+  } = useNetwork();
 
   useEffect(() => {
     const clientToken = localStorage.getItem('client_authenticated');
@@ -29,7 +34,7 @@ export default function Client() {
     }
   }, []);
 
-  // 0. Autenticação Exclusiva do Cliente
+  
   const { register: regLogin, handleSubmit: submitLogin } =
     useForm<LoginRequestDTO>();
 
@@ -47,7 +52,11 @@ export default function Client() {
       } catch {}
 
       setIsClientAuthenticated(true);
-      await refreshOfflineCookie();
+      if (isOnline) {
+        await loadOnlineData();
+      } else {
+        await refreshOfflineCookie();
+      }
     } catch {
       alert('Credenciais inválidas no aplicativo do Socorrista!');
     }
@@ -58,7 +67,6 @@ export default function Client() {
     setIsClientAuthenticated(false);
   };
 
-  // 1. Criar Paciente (passando is_offline: true)
   const {
     register: regPatient,
     handleSubmit: submitPatient,
@@ -66,14 +74,21 @@ export default function Client() {
   } = useForm<CreatePatientDTO>();
 
   const onSavePatient = async (data: CreatePatientDTO) => {
+    const isOffline = !isOnline;
     try {
       await coreService.createPatient({
         ...data,
-        is_offline: true,
+        is_offline: isOffline,
       });
-      markOfflineChange();
-      await refreshOfflineCookie();
-      alert('Paciente registrado no SQLite (is_offline: true)!');
+
+      if (isOffline) {
+        markOfflineChange();
+        await refreshOfflineCookie();
+        alert('Offline: Paciente salvo no SQLite!');
+      } else {
+        await loadOnlineData();
+        alert('Online: Paciente salvo no PostgreSQL!');
+      }
       resetPatient();
     } catch (e: any) {
       alert(
@@ -83,7 +98,6 @@ export default function Client() {
     }
   };
 
-  // 2. Criar Prontuário (passando is_offline: true)
   const {
     register: regRecord,
     handleSubmit: submitRecord,
@@ -91,14 +105,21 @@ export default function Client() {
   } = useForm<CreateMedicalRecordDTO>();
 
   const onSaveRecord = async (data: CreateMedicalRecordDTO) => {
+    const isOffline = !isOnline;
     try {
       await coreService.createMedicalRecord({
         ...data,
-        is_offline: true,
+        is_offline: isOffline,
       });
-      markOfflineChange();
-      await refreshOfflineCookie();
-      alert('Prontuário registrado no SQLite (is_offline: true)!');
+
+      if (isOffline) {
+        markOfflineChange();
+        await refreshOfflineCookie();
+        alert('Offline: Prontuário salvo no SQLite!');
+      } else {
+        await loadOnlineData();
+        alert('Online: Prontuário salvo no PostgreSQ!');
+      }
       resetRecord();
     } catch (e: any) {
       alert(
@@ -108,7 +129,6 @@ export default function Client() {
     }
   };
 
-  // 3. Criar Atendimento (passando is_offline: true)
   const {
     register: regAtt,
     control: controlAtt,
@@ -127,6 +147,7 @@ export default function Client() {
   });
 
   const onSaveAttendance = async (data: CreateAttendanceDTO) => {
+    const isOffline = !isOnline;
     const professionalId = localStorage.getItem('professional_id') || undefined;
 
     const payload: CreateAttendanceDTO = {
@@ -138,7 +159,7 @@ export default function Client() {
       consciousness_level: Number(data.consciousness_level),
       triage_protocol: data.triage_protocol,
       notes: data.notes || '',
-      is_offline: true,
+      is_offline: isOffline,
       medications: (data.medications || []).map((m) => ({
         medication_id: m.medication_id,
         applied_dose: m.applied_dose,
@@ -148,9 +169,15 @@ export default function Client() {
 
     try {
       await coreService.createAttendance(payload);
-      markOfflineChange();
-      await refreshOfflineCookie();
-      alert('Atendimento registrado no SQLite (is_offline: true)!');
+
+      if (isOffline) {
+        markOfflineChange();
+        await refreshOfflineCookie();
+        alert('Offline: Atendimento salvo no SQLite!');
+      } else {
+        await loadOnlineData();
+        alert('Online: Atendimento salvo no PostgreSQL!');
+      }
       resetAtt();
     } catch (e: any) {
       alert(
@@ -160,7 +187,6 @@ export default function Client() {
     }
   };
 
-  // Se o cliente não estiver autenticado, exibe a tela de login interna do celular
   if (!isClientAuthenticated) {
     return (
       <div className="client-app">
@@ -232,7 +258,9 @@ export default function Client() {
       <div className="client-body">
         {activeTab === 'attendance' && (
           <form onSubmit={submitAtt(onSaveAttendance)} className="mobile-form">
-            <h4>Registrar Atendimento</h4>
+            <h4>
+              Registrar Atendimento ({isOnline ? 'Online' : 'Offline SQLite'})
+            </h4>
 
             <label>Paciente</label>
             <select {...regAtt('patient_id', { required: true })}>
@@ -369,7 +397,7 @@ export default function Client() {
 
         {activeTab === 'patient' && (
           <form onSubmit={submitPatient(onSavePatient)} className="mobile-form">
-            <h4>Cadastrar Paciente</h4>
+            <h4>Cadastrar Paciente ({isOnline ? 'Online' : 'Offline SQLite'})</h4>
             <label>Nome Completo</label>
             <input
               placeholder="Nome do paciente"
@@ -390,7 +418,7 @@ export default function Client() {
 
         {activeTab === 'record' && (
           <form onSubmit={submitRecord(onSaveRecord)} className="mobile-form">
-            <h4>Novo Prontuário</h4>
+            <h4>Novo Prontuário ({isOnline ? 'Online' : 'Offline SQLite'})</h4>
             <label>Paciente</label>
             <select {...regRecord('patient_id', { required: true })}>
               <option value="">Selecione...</option>
@@ -433,7 +461,9 @@ export default function Client() {
 
         {activeTab === 'sqlite_data' && (
           <div className="outbox-list">
-            <h4>Dados no Cookie (fetchOfflineData)</h4>
+            <h4>
+              Dados Carregados ({isOnline ? 'Rotas Online' : 'SQLite / Cookie'})
+            </h4>
             <div className="outbox-card">
               <strong>Pacientes ({localCache.patients.length})</strong>
               <pre>{JSON.stringify(localCache.patients, null, 2)}</pre>
@@ -481,7 +511,7 @@ export default function Client() {
           className={activeTab === 'sqlite_data' ? 'active' : ''}
           onClick={() => setActiveTab('sqlite_data')}
         >
-          🍪 SQLite
+          📦 Dados
         </button>
       </nav>
     </div>

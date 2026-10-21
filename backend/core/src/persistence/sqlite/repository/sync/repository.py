@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import os
 from typing import Any
@@ -51,14 +52,14 @@ class SyncRepositorySQLite(SqliteBase, SyncRepository):
 
     async def pull_from_database(self) -> dict:
         try:
-            # 1. Busca os DTOs
+                              
             meds_response = await self.medication_repo.fetch_all()
             pats_response = await self.patient_repo.fetch_all()
             recs_response = await self.medical_record_repo.fetch_all()
             atts_response = await self.attendance_repo.fetch_all()
             profs_response = await self.professional_repo.fetch_all()
 
-            # 2. Extrai a lista de '.items' (se for um DTO) ou usa a lista diretamente
+                                                                                      
             medications = (
                 meds_response.items
                 if hasattr(meds_response, "items")
@@ -266,6 +267,19 @@ class SyncRepositorySQLite(SqliteBase, SyncRepository):
             "logs": 0,
         }
 
+                                                                                              
+        def _parse_sqlite_date(date_val):
+            if not date_val:
+                return None
+            if isinstance(date_val, datetime):
+                return date_val.replace(tzinfo=None)
+            try:
+                                                                                                      
+                dt = datetime.fromisoformat(str(date_val))
+                return dt.replace(tzinfo=None)
+            except Exception:
+                return None
+
         patients_list = await self.patient_repo.fetch_all()
         records_list = await self.medical_record_repo.fetch_all()
 
@@ -275,7 +289,7 @@ class SyncRepositorySQLite(SqliteBase, SyncRepository):
         with self.sqlite.get_connection() as conn:
             cursor = conn.cursor()
 
-            # A) Sincronizar Pacientes
+                                      
             cursor.execute("SELECT * FROM patients WHERE is_synced = 0")
             for row in cursor.fetchall():
                 local_pat = dict(row)
@@ -296,6 +310,8 @@ class SyncRepositorySQLite(SqliteBase, SyncRepository):
                         id=UUID(pat_id),
                         name=winner["name"],
                         document=winner["document"],
+                                                                                             
+                        created_at=_parse_sqlite_date(winner.get("created_at")),
                     )
 
                 cursor.execute(
@@ -303,7 +319,7 @@ class SyncRepositorySQLite(SqliteBase, SyncRepository):
                 )
                 synced_counts["patients"] += 1
 
-            # B) Sincronizar Prontuários
+                                        
             cursor.execute("SELECT * FROM medical_records WHERE is_synced = 0")
             for row in cursor.fetchall():
                 local_rec = dict(row)
@@ -329,6 +345,8 @@ class SyncRepositorySQLite(SqliteBase, SyncRepository):
                         known_allergies=winner.get("known_allergies"),
                         chronic_conditions=winner.get("chronic_conditions"),
                         emergency_contact=winner.get("emergency_contact"),
+                                                                                             
+                        created_at=_parse_sqlite_date(winner.get("created_at")),
                     )
 
                 cursor.execute(
@@ -336,25 +354,25 @@ class SyncRepositorySQLite(SqliteBase, SyncRepository):
                 )
                 synced_counts["medical_records"] += 1
 
-            # C) Sincronizar Atendimentos lendo direto do JSON
+                                                              
             cursor.execute("SELECT * FROM attendances WHERE is_synced = 0")
             for row in cursor.fetchall():
                 att = dict(row)
                 att_id = str(att["id"])
 
-                # Faz o parse da coluna medications_json
                 raw_meds = (
                     json.loads(att["medications_json"])
                     if att.get("medications_json")
                     else []
                 )
 
-                # Monta a lista formatada com UUIDs para o repositório do PostgreSQL
                 meds = [
                     {
                         "medication_id": UUID(str(m["medication_id"])),
                         "applied_dose": m.get("applied_dose"),
-                        "applied_at": m.get("applied_at"),
+                        "applied_at": _parse_sqlite_date(
+                            m.get("applied_at")
+                        ),                                                           
                     }
                     for m in raw_meds
                 ]
@@ -368,29 +386,35 @@ class SyncRepositorySQLite(SqliteBase, SyncRepository):
                     id=UUID(att_id),
                     medical_record_id=UUID(str(att["medical_record_id"])),
                     professional_id=UUID(str(att["professional_id"])),
-                    patient_id=UUID(str(att["patient_id"])) if att.get("patient_id") else None,
+                    patient_id=(
+                        UUID(str(att["patient_id"])) if att.get("patient_id") else None
+                    ),
                     pressure=att.get("pressure"),
                     heart_rate=att.get("heart_rate"),
                     consciousness_level=att.get("consciousness_level"),
                     triage_protocol=att.get("triage_protocol"),
                     notes=att.get("notes"),
                     medications=meds,
+                                                                                         
+                    created_at=_parse_sqlite_date(att.get("created_at")),
                 )
 
-                # Atualiza apenas a tabela attendances
                 cursor.execute(
                     "UPDATE attendances SET is_synced = 1 WHERE id = ?", (att_id,)
                 )
                 synced_counts["attendances"] += 1
 
-            # D) Sincronizar Logs de Auditoria
+                                              
             cursor.execute("SELECT * FROM offline_audit_logs WHERE is_synced = 0")
             logs = [dict(r) for r in cursor.fetchall()]
             if logs and self.go_logs_url:
                 async with httpx.AsyncClient() as client:
                     for log_item in logs:
                         try:
-                            await client.post(
+                            print(f"Aviso: enviando log offline para Go: {log_item}")
+
+                                                                           
+                            res = await client.post(
                                 self.go_logs_url,
                                 json={
                                     "client_ip": log_item.get("client_ip"),
@@ -398,18 +422,33 @@ class SyncRepositorySQLite(SqliteBase, SyncRepository):
                                     "http_method": log_item.get("http_method"),
                                     "route": log_item.get("route"),
                                     "status_code": log_item.get("status_code"),
-                                    "processing_time_ms": log_item.get("processing_time_ms"),
+                                    "processing_time_ms": log_item.get(
+                                        "processing_time_ms"
+                                    ),
+                                    "created_at": log_item.get("created_at"),
                                 },
                                 timeout=3.0,
                             )
-                        except Exception as e:
-                            print(f"Aviso: falha ao enviar log offline para Go: {e}")
 
-                        cursor.execute(
-                            "UPDATE offline_audit_logs SET is_synced = 1 WHERE id = ?",
-                            (log_item["id"],),
-                        )
-                        synced_counts["logs"] += 1
+                                                                                                                   
+                            res.raise_for_status()
+
+                                                                                             
+                            cursor.execute(
+                                "UPDATE offline_audit_logs SET is_synced = 1 WHERE id = ?",
+                                (log_item["id"],),
+                            )
+                            synced_counts["logs"] += 1
+
+                        except httpx.HTTPStatusError as exc:
+                                                                                          
+                            print(
+                                f"Erro HTTP ao enviar log {log_item['id']} para Go. Status: {exc.response.status_code} - Resposta do Go: {exc.response.text}"
+                            )
+                        except Exception as e:
+                            print(
+                                f"Aviso: falha de conexão ao enviar log offline para Go: {e}"
+                            )
 
             conn.commit()
 
@@ -436,7 +475,7 @@ class SyncRepositorySQLite(SqliteBase, SyncRepository):
                 cursor.execute("SELECT * FROM attendances")
                 attendances = [dict(row) for row in cursor.fetchall()]
 
-            # Retorna envelopado com a chave 'items' para satisfazer o schema do Pydantic
+                                                                                         
             return {
                 "attendances": {"items": attendances},
                 "medical_records": {"items": medical_records},

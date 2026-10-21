@@ -17,7 +17,7 @@ def create_access_token(data: dict) -> str:
     """
     to_encode = data.copy()
 
-    # Busca as variáveis de ambiente e converte os minutos para inteiro
+                                                                       
     expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 15))
     secret_key = os.getenv("JWT_SECRET_KEY", "")
 

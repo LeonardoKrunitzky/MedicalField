@@ -1,3 +1,6 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from injector import inject
 from src.config.errors.db_exceptions import handle_database_error
 from src.dtos.medication.create import CreateMedicationDTO, CreateMedicationResponseDto
@@ -18,6 +21,7 @@ class CreateMedicationsUseCase:
                 id=generate_uuid5(payload),
                 name=payload.name,
                 standard_dosage=payload.standard_dosage,
+                created_at=datetime.now(ZoneInfo("America/Sao_Paulo")),
             )
             return CreateMedicationResponseDto(**medication)
         except Exception as e:

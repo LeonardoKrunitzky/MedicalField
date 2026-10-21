@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
@@ -28,6 +29,7 @@ class AttendanceService:
         triage_protocol: str,
         notes: Optional[str],
         medications: Optional[List[CreateAttendanceMedicationDTO]],
+        created_at: datetime,
     ) -> Attendance:
         return await self._repository.create(
             id=id,
@@ -40,6 +42,7 @@ class AttendanceService:
             triage_protocol=triage_protocol,
             notes=notes,
             medications=medications,
+            created_at=created_at,
         )
 
     async def fetch_all(self) -> list[Attendance]:
@@ -66,6 +69,7 @@ class AttendanceOfflineService:
         triage_protocol: str,
         notes: Optional[str],
         medications: Optional[List[CreateAttendanceMedicationDTO]],
+        created_at: datetime,
     ) -> dict:
         return await self._repository.save_attendance_offline(
             id=id,
@@ -78,4 +82,5 @@ class AttendanceOfflineService:
             triage_protocol=triage_protocol,
             notes=notes,
             medications=medications,
+            created_at=created_at,
         )

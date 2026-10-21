@@ -1,3 +1,3 @@
-INSERT INTO patients (id, name, document)
-VALUES(:id, :name, :document)
+INSERT INTO patients (id, name, document, created_at)
+VALUES(:id, :name, :document, :created_at)
 RETURNING *;

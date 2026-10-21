@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { coreService } from '../../services/coreService';
-import {
+import type {
   Patient,
   MedicalRecord,
   Attendance,
@@ -70,8 +70,11 @@ export default function Portal() {
     <div className="portal-container">
       <div className="portal-header">
         <div>
-          <h1>🏥 MedicalField — Portal Central</h1>
-          <p>Gestão de pacientes, prontuários, medicamentos e atendimentos sincronizados</p>
+          <h1>🏥 MedicalField — Portal Central (Nuvem)</h1>
+          <p>
+            Gestão de pacientes, prontuários, medicamentos e atendimentos
+            sincronizados
+          </p>
         </div>
         <button type="button" className="btn-refresh" onClick={loadAllData}>
           🔄 Atualizar Dados
@@ -88,7 +91,7 @@ export default function Portal() {
           <strong>{records.length}</strong>
         </div>
         <div className="stat-card">
-          <span>Atendimentos </span>
+          <span>Atendimentos na Nuvem</span>
           <strong>{attendances.length}</strong>
         </div>
         <div className="stat-card">
@@ -96,6 +99,40 @@ export default function Portal() {
           <strong>{medications.length}</strong>
         </div>
       </div>
+
+      {}
+      <section className="portal-section">
+        <div className="section-header">
+          <h2>Pacientes Cadastrados</h2>
+        </div>
+        <table className="portal-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Documento (CPF/RG)</th>
+              <th>ID (UUID)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {patients.map((p) => (
+              <tr key={p.id}>
+                <td>
+                  <strong>{p.name}</strong>
+                </td>
+                <td>{p.document}</td>
+                <td className="uuid-cell">{p.id}</td>
+              </tr>
+            ))}
+            {patients.length === 0 && (
+              <tr>
+                <td colSpan={3} style={{ textAlign: 'center' }}>
+                  Nenhum paciente sincronizado.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </section>
 
       <section className="portal-section">
         <div className="section-header">
@@ -144,7 +181,7 @@ export default function Portal() {
                       <ul>
                         {attendanceMeds[att.id].map((m) => (
                           <li key={m.id}>
-                            {m.name} ({m.applied_dose}) - {m.applied_at}
+                            {m.name} ({m.applied_dose})
                           </li>
                         ))}
                       </ul>

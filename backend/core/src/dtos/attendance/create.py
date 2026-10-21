@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 
 class CreateAttendanceMedicationDTO(BaseModel):
-    id: Optional[UUID] = Field(default=None)
     medication_id: UUID = Field(description="The unique identifier of the medication")
     applied_dose: str = Field(description="The dose of the medication that was applied")
     applied_at: datetime = Field(description="The date and time when the medication was applied")
@@ -22,7 +21,6 @@ class CreateAttendanceDTO(BaseModel):
     medications: Optional[List[CreateAttendanceMedicationDTO]] = Field(description="A list of medications administered during the attendance")
     is_offline: Optional[bool] = Field(default=False, description="Indicates whether the attendance was recorded offline or online")
     professional_id: Optional[UUID] = Field(default=None, description="The unique identifier of the professional associated with the attendance")
-
 
 class CreateAttendanceResponseDTO(BaseModel):
     id: UUID = Field(description="The unique identifier of the attendance")

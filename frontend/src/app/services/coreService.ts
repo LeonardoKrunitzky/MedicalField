@@ -52,7 +52,6 @@ export const coreService = {
   createAttendance: async (data: CreateAttendanceDTO): Promise<Attendance> =>
     attendanceService.createAttendance(data),
 
-  // Rotas de Sincronização (SQLite <-> PostgreSQL)
   syncPull: async () => syncService.syncPull(),
   syncPush: async () => syncService.syncPush(),
   fetchOfflineData: async (): Promise<LocalCacheData> =>

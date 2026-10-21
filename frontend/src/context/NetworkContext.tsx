@@ -14,7 +14,6 @@ import type { LocalCacheData } from '../app/types';
 
 const OFFLINE_COOKIE_NAME = 'mf_offline_data';
 
-// Utilitários para gravar e ler os dados do SQLite no Cookie
 const setCookieData = (name: string, value: LocalCacheData, days = 7) => {
   if (typeof document === 'undefined') return;
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
@@ -42,6 +41,7 @@ interface NetworkContextType {
   isSyncing: boolean;
   hasPendingOfflineChanges: boolean;
   markOfflineChange: () => void;
+  loadOnlineData: () => Promise<void>;
   refreshOfflineCookie: () => Promise<LocalCacheData | undefined>;
   handleManualSync: () => Promise<void>;
 }
@@ -62,31 +62,60 @@ export const NetworkProvider = ({ children }: { children: ReactNode }) => {
 
   const prevOnlineRef = useRef<boolean>(isOnline);
 
-  // Carrega inicialmente os dados que já estavam salvos no Cookie
-  useEffect(() => {
-    const cookieCache = getCookieData(OFFLINE_COOKIE_NAME);
-    if (cookieCache) {
-      setLocalCache(cookieCache);
+  
+  const loadOnlineData = useCallback(async () => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('access_token')) {
+      return;
+    }
+    try {
+      const [patients, medicalRecords, attendances, medications] =
+        await Promise.all([
+          coreService.getPatients(),
+          coreService.getMedicalRecords(),
+          coreService.getAttendances(),
+          coreService.getMedications(),
+        ]);
+      setLocalCache({ patients, medicalRecords, attendances, medications });
+    } catch (error) {
+      console.error('Erro ao buscar dados nas rotas online:', error);
     }
   }, []);
 
-  // Chama GET /fetchOfflineData (SQLite) e armazena o retorno no Cookie
+  
   const refreshOfflineCookie = useCallback(async () => {
     try {
       const offlineData = await coreService.fetchOfflineData();
-      setLocalCache(offlineData);
       setCookieData(OFFLINE_COOKIE_NAME, offlineData);
+      if (!isOnline) {
+        setLocalCache(offlineData);
+      }
       return offlineData;
     } catch (error) {
       console.error('Erro ao buscar dados do SQLite (fetchOfflineData):', error);
     }
-  }, []);
+  }, [isOnline]);
 
   const markOfflineChange = useCallback(() => {
     setHasPendingOfflineChanges(true);
   }, []);
 
-  // PULL: Traz dados do PostgreSQL (Online) para o SQLite (Offline) e salva fetchOfflineData no Cookie
+  
+  useEffect(() => {
+    if (isOnline) {
+      
+      loadOnlineData();
+    } else {
+      
+      const cookieData = getCookieData(OFFLINE_COOKIE_NAME);
+      if (cookieData) {
+        setLocalCache(cookieData);
+      } else {
+        refreshOfflineCookie();
+      }
+    }
+  }, [isOnline, loadOnlineData, refreshOfflineCookie]);
+
+  
   const pullFromServer = useCallback(async () => {
     if (!isOnline) {
       alert('Dispositivo Offline! Mude o seletor para Online para sincronizar.');
@@ -95,45 +124,49 @@ export const NetworkProvider = ({ children }: { children: ReactNode }) => {
     setIsSyncing(true);
     try {
       await coreService.syncPull();
-      await refreshOfflineCookie();
+      const offlineData = await coreService.fetchOfflineData();
+      setCookieData(OFFLINE_COOKIE_NAME, offlineData);
+      await loadOnlineData();
     } catch (error) {
       console.error('Erro ao executar Pull e salvar no Cookie:', error);
       alert('Erro ao sincronizar dados do PostgreSQL para o SQLite.');
     } finally {
       setIsSyncing(false);
     }
-  }, [isOnline, refreshOfflineCookie]);
+  }, [isOnline, loadOnlineData]);
 
-  // PUSH: Envia registros pendentes do SQLite para o PostgreSQL, atualiza via Pull e salva no Cookie
+  
   const pushToServer = useCallback(async () => {
     if (!isOnline) return;
     setIsSyncing(true);
     try {
       await coreService.syncPush();
       await coreService.syncPull();
-      await refreshOfflineCookie();
+      const offlineData = await coreService.fetchOfflineData();
+      setCookieData(OFFLINE_COOKIE_NAME, offlineData);
+      await loadOnlineData();
       setHasPendingOfflineChanges(false);
-      alert('Sincronização (SQLite -> PostgreSQL) concluída e Cookie atualizado!');
+      alert('Sincronização (SQLite -> PostgreSQL) concluída com sucesso!');
     } catch (error) {
       console.error('Erro ao fazer Push do SQLite para o PostgreSQL:', error);
       alert('Erro ao enviar dados offline para a nuvem.');
     } finally {
       setIsSyncing(false);
     }
-  }, [isOnline, refreshOfflineCookie]);
+  }, [isOnline, loadOnlineData]);
 
-  // PADRÃO OBSERVER: Observa a transição de Offline -> Online para disparar o Push
+  
   useEffect(() => {
     const transitionedToOnline = !prevOnlineRef.current && isOnline;
     prevOnlineRef.current = isOnline;
 
     if (transitionedToOnline && hasPendingOfflineChanges) {
-      console.log('[Observer] Conectividade Online restabelecida! Disparando Push...');
+      console.log('[Observer] Rede Online restabelecida! Disparando Push do SQLite...');
       pushToServer();
     }
   }, [isOnline, hasPendingOfflineChanges, pushToServer]);
 
-  // Botão "Sincronizar": Executa o Pull (PGSQL -> SQLite) e armazena fetchOfflineData no Cookie
+  
   const handleManualSync = async () => {
     if (!isOnline) {
       alert('Você está Offline! Ative o toggle para Online antes de sincronizar.');
@@ -143,7 +176,7 @@ export const NetworkProvider = ({ children }: { children: ReactNode }) => {
       await pushToServer();
     } else {
       await pullFromServer();
-      alert('Sincronização concluída! Dados do SQLite armazenados no Cookie.');
+      alert('Sincronização concluída! Dados do SQLite salvos no Cookie.');
     }
   };
 
@@ -156,6 +189,7 @@ export const NetworkProvider = ({ children }: { children: ReactNode }) => {
         isSyncing,
         hasPendingOfflineChanges,
         markOfflineChange,
+        loadOnlineData,
         refreshOfflineCookie,
         handleManualSync,
       }}

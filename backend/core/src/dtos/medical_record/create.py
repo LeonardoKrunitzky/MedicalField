@@ -16,7 +16,6 @@ class CreateMedicalRecordDTO(BaseModel):
     is_offline: Optional[bool] = Field(default=False, description="Indicates whether the attendance was recorded offline or online")
     professional_id: Optional[UUID] = Field(default=None, description="The unique identifier of the professional associated with the attendance")
 
-
 class CreateMedicalRecordResponseDTO(BaseModel):
     id: UUID = Field(description="The unique identifier of the medical record")
     patient_id: UUID = Field(description="The unique identifier of the patient")

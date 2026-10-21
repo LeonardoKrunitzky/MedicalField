@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
@@ -56,6 +57,7 @@ class MedicalRecordRepositoryPostgreSQL(PostgresqlBase, MedicalRecordRepository)
         known_allergies: str,
         chronic_conditions: str,
         emergency_contact: str,
+        created_at: datetime
     ) -> MedicalRecord:
         return await self._execute_command(
             query=CREATE_QUERY,
@@ -66,5 +68,6 @@ class MedicalRecordRepositoryPostgreSQL(PostgresqlBase, MedicalRecordRepository)
                 "known_allergies": known_allergies,
                 "chronic_conditions": chronic_conditions,
                 "emergency_contact": emergency_contact,
+                "created_at": created_at
             },
         )

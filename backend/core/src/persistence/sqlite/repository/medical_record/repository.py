@@ -1,9 +1,10 @@
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
 from src.connections.sqlite.base import SqliteBase
 from src.connections.sqlite.connection import SQLiteClient
-from src.domains.medical_records.repository import MedicalRecordOfflineRepository # ou MedicalRecordRepository
+from src.domains.medical_records.repository import MedicalRecordOfflineRepository                             
 
 
 class MedicalRecordRepositorySQLite(SqliteBase, MedicalRecordOfflineRepository):
@@ -18,11 +19,10 @@ class MedicalRecordRepositorySQLite(SqliteBase, MedicalRecordOfflineRepository):
         known_allergies: Optional[str],
         chronic_conditions: Optional[str],
         emergency_contact: Optional[str],
-        professional_id: UUID,
+        created_at: datetime
     ) -> dict:
         record_id = str(id)
         pat_id = str(patient_id)
-        now = self._now_sp()
 
         with self.sqlite.get_connection() as conn:
             conn.execute(
@@ -38,12 +38,10 @@ class MedicalRecordRepositorySQLite(SqliteBase, MedicalRecordOfflineRepository):
                     known_allergies,
                     chronic_conditions,
                     emergency_contact,
-                    now,
+                    created_at,
                 ),
             )
-            self._log_offline_action(
-                conn, str(professional_id), "POST", "/core/usecases/medical-record/"
-            )
+            
             conn.commit()
 
         return {
@@ -53,5 +51,5 @@ class MedicalRecordRepositorySQLite(SqliteBase, MedicalRecordOfflineRepository):
             "known_allergies": known_allergies,
             "chronic_conditions": chronic_conditions,
             "emergency_contact": emergency_contact,
-            "created_at": now
+            "created_at": created_at
         }
