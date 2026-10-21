@@ -11,9 +11,9 @@ services:
     depends_on:
       - postgres
 
-  medical_field_logs:
+  medical_field_tracing:
     build:
-      context: ./backend/logs
+      context: ./backend/tracing
     ports:
       - "8081:8081"
 

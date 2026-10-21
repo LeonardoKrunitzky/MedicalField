@@ -4,6 +4,7 @@
 CORE_DIR = backend/core
 COMMUNICATION_DIR = backend/communication
 TRACING_DIR = backend/tracing
+FRONTEND_DIR = frontend
 
 # ==========================================
 # DOCKER & DATABASES (Postgres e SQLite via compose)
@@ -42,3 +43,4 @@ install-deps:
 	cd $(CORE_DIR) && uv sync
 	cd $(TRACING_DIR) && go mod tidy && go test ./... && go build
 	cd $(COMMUNICATION_DIR) && npm install
+	cd $(FRONTEND_DIR) && npm install
