@@ -8,20 +8,28 @@ services:
       - "8080:8080"
     volumes:
       - ./databases:/app/databases
-    depends_on:
-      - postgres
+    networks:
+      - medical_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   medical_field_tracing:
     build:
       context: ./backend/tracing
     ports:
       - "8081:8081"
+    networks:
+      - medical_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   medical_field_communication:
     build:
       context: ./backend/communication
     ports:
       - "8082:8082"
+    networks:
+      - medical_network
 
   medical_field_frontend:
     build:
@@ -30,3 +38,9 @@ services:
       - "4000:4000"
     environment:
       - PORT=4000
+    networks:
+      - medical_network
+
+networks:
+  medical_network:
+    driver: bridge
