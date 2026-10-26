@@ -10,6 +10,7 @@ import type {
   MedicationByAttendance,
 } from '../../types';
 import './Portal.css';
+import { communicationService } from '@/app/services/communicationService';
 
 export default function Portal() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -20,6 +21,10 @@ export default function Portal() {
   const [attendanceMeds, setAttendanceMeds] = useState<
     Record<string, MedicationByAttendance[]>
   >({});
+
+  // Estados para o envio de e-mail e geração de PDF
+  const [recipientEmail, setRecipientEmail] = useState<string>('');
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   const loadAllData = async () => {
     try {
@@ -61,8 +66,86 @@ export default function Portal() {
     try {
       const items = await coreService.getMedicationsByAttendance(attendanceId);
       setAttendanceMeds((prev) => ({ ...prev, [attendanceId]: items }));
+      return items;
     } catch {
       setAttendanceMeds((prev) => ({ ...prev, [attendanceId]: [] }));
+      return [];
+    }
+  };
+
+  // Monta o objeto consolidado cruzando Paciente + Prontuário + Atendimento + Medicações
+  const buildReportPayload = async (att: Attendance) => {
+    let medsList = attendanceMeds[att.id];
+    if (!medsList) {
+      medsList = await handleLoadAttendanceMeds(att.id);
+    }
+
+    const patient = patients.find(
+      (p) => p.id === att.patient_id || p.name === att.patient_name
+    );
+    const record = records.find(
+      (r) =>
+        r.id === att.medical_record_id ||
+        r.patient_id === att.patient_id ||
+        r.patient_name === att.patient_name
+    );
+
+    return {
+      attendance_id: att.id,
+      patient_name: att.patient_name || patient?.name || 'Paciente',
+      patient_document: patient?.document,
+      professional_name: att.professional_name,
+      pressure: att.pressure,
+      heart_rate: att.heart_rate,
+      consciousness_level: att.consciousness_level,
+      triage_protocol: att.triage_protocol,
+      notes: att.notes,
+      created_at: att.created_at,
+      blood_type: record?.blood_type,
+      known_allergies: record?.known_allergies,
+      chronic_conditions: record?.chronic_conditions,
+      emergency_contact: record?.emergency_contact,
+      medications: medsList.map((m) => ({
+        name: m.name,
+        applied_dose: m.applied_dose,
+        standard_dosage: m.standard_dosage,
+      })),
+    };
+  };
+
+  // Passo 16: Baixar PDF da Ficha de Atendimento
+  const handleDownloadPdf = async (att: Attendance) => {
+    try {
+      setProcessingId(att.id);
+      const payload = await buildReportPayload(att);
+      await communicationService.downloadAttendancePdf(payload);
+    } catch (error) {
+      console.error('Erro ao baixar PDF:', error);
+      alert('Erro ao gerar o PDF de atendimento.');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // Passo 17: Enviar PDF por E-mail
+  const handleSendEmail = async (att: Attendance) => {
+    const emailToUse =
+      recipientEmail.trim() ||
+      window.prompt('Digite o e-mail de destino para enviar a ficha em PDF:') ||
+      '';
+
+    if (!emailToUse.trim()) return;
+
+    try {
+      setProcessingId(att.id);
+      const payload = await buildReportPayload(att);
+      await communicationService.sendAttendanceEmail(emailToUse.trim(), payload);
+      alert(`Ficha em PDF enviada com sucesso para ${emailToUse}!`);
+    } catch (error) {
+      console.error('Erro ao enviar e-mail:', error);
+      alert('Falha ao enviar o e-mail. Verifique o serviço de comunicação.');
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -100,7 +183,6 @@ export default function Portal() {
         </div>
       </div>
 
-      {}
       <section className="portal-section">
         <div className="section-header">
           <h2>Pacientes Cadastrados</h2>
@@ -137,17 +219,26 @@ export default function Portal() {
       <section className="portal-section">
         <div className="section-header">
           <h2>Atendimentos Registrados</h2>
-          <select
-            value={selectedPatientId}
-            onChange={(e) => handleFilterByPatient(e.target.value)}
-          >
-            <option value="">Todos os Pacientes</option>
-            {patients.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} ({p.document})
-              </option>
-            ))}
-          </select>
+          <div className="section-controls">
+            <input
+              type="email"
+              className="email-input"
+              placeholder="E-mail destino (ex: paciente@gmail.com)"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+            />
+            <select
+              value={selectedPatientId}
+              onChange={(e) => handleFilterByPatient(e.target.value)}
+            >
+              <option value="">Todos os Pacientes</option>
+              {patients.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.document})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <table className="portal-table">
@@ -160,6 +251,7 @@ export default function Portal() {
               <th>Protocolo</th>
               <th>Notas</th>
               <th>Medicações</th>
+              <th>Ações (PDF / E-mail)</th>
             </tr>
           </thead>
           <tbody>
@@ -179,8 +271,8 @@ export default function Portal() {
                   {attendanceMeds[att.id] ? (
                     attendanceMeds[att.id].length > 0 ? (
                       <ul>
-                        {attendanceMeds[att.id].map((m) => (
-                          <li key={m.id}>
+                        {attendanceMeds[att.id].map((m, i) => (
+                          <li key={i}>
                             {m.name} ({m.applied_dose})
                           </li>
                         ))}
@@ -197,6 +289,26 @@ export default function Portal() {
                       Ver Medicações
                     </button>
                   )}
+                </td>
+                <td>
+                  <div className="action-buttons">
+                    <button
+                      type="button"
+                      className="btn-pdf"
+                      disabled={processingId === att.id}
+                      onClick={() => handleDownloadPdf(att)}
+                    >
+                      📄 PDF
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-email"
+                      disabled={processingId === att.id}
+                      onClick={() => handleSendEmail(att)}
+                    >
+                      {processingId === att.id ? '⏳...' : '✉️ E-mail'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

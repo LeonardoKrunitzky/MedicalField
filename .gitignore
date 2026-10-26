@@ -36,7 +36,7 @@ htmlcov/
 # Backend: Logs (Go)
 # ==========================================
 # Ignora binários compilados
-backend/logs/logs
+backend/tracing/tracing
 *.exe
 *.exe~
 *.dll

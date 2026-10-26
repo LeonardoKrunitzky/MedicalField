@@ -13,7 +13,63 @@
   margin-bottom: 24px;
 }
 .portal-header h1 { margin: 0; font-size: 24px; }
-.portal-header p { margin: 4px 0 0; color: #64748b; }
+.portal-header p { margin: 4px 0 0; color: #64748b;.section-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.email-input {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  min-width: 260px;
+  font-size: 13px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-pdf,
+.btn-email {
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-pdf {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.btn-pdf:hover {
+  background: #dbeafe;
+}
+
+.btn-email {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.btn-email:hover {
+  background: #dcfce7;
+}
+
+.btn-pdf:disabled,
+.btn-email:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+} }
 
 .btn-refresh {
   background: #0f172a;
@@ -104,3 +160,61 @@
   font-size: 12px;
 }
 .uuid-cell { font-family: monospace; font-size: 11px; color: #64748b; }
+
+.section-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.email-input {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  min-width: 260px;
+  font-size: 13px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-pdf,
+.btn-email {
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-pdf {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.btn-pdf:hover {
+  background: #dbeafe;
+}
+
+.btn-email {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.btn-email:hover {
+  background: #dcfce7;
+}
+
+.btn-pdf:disabled,
+.btn-email:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
