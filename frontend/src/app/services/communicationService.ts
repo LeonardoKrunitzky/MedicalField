@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const communicationApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_COMMUNICATION_URL || 'http://localhost:3001',
+  baseURL: process.env.NEXT_PUBLIC_COMMUNICATION_URL,
 });
 
 communicationApi.interceptors.request.use((config) => {
